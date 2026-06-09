@@ -82,31 +82,39 @@ cat INSTRUCTIONS_TTY1.md
 
 ---
 
-## 3. Estado Atual (após agentes trabalharem)
+## 3. Estado Atual (após merge + white box)
 
-**Tag base:** `marco-zero` (`b6e7c08`)  
+**Branch coordenador (merged):** `feat/path-config-ui`  
 **Data:** 2026-06-09
 
 ```
-Top-level:  9 arquivos de coordenação
-Peso total: ~70MB (source-only, limpo)
+Merge completo:
+├── código codex:  PyInstaller spec, startup doctor, runtime_paths, bootstrap, launchers
+├── código opencode: PathConfig, OutputOrganizer, CaptureTab, StemTab, TrimTab, VideoEditorTab
+├── pyproject.toml: deps unificadas, ruff/pytest config
+└── tests/  → 10/10 passam ✅
 ```
 
-### Commits dos agentes
+### White Box Gate ✅
 
-**codex (tty0) — `fix/self-contained-deps`:**
-```
-2f07815 feat(scaffold): create AudioLabEditor portable app base
-```
-Criou a pasta `AudioLabEditor/` com estrutura portátil.
+| Critério | Resultado |
+|----------|-----------|
+| `compileall -q src/` | ✅ 0 erros |
+| `ruff check src/` | ✅ 0 erros |
+| `shell=True` | ✅ 0 ocorrências |
+| `<500 linhas/arquivo src/` | ✅ max `254` linhas |
+| Testes | ✅ 10/10 passam |
+| GUI smoke test | ✅ "Tabs rendered successfully" |
+| subprocess `shell=False` | ✅ padrão seguro |
 
-**opencode (tty1) — `feat-output-organization`:**
+### Commits no `feat/path-config-ui`
+
 ```
-13d753b feat(stem): add SeparateAudioUseCase, Demucs adapter, port StemTab
-f95648c feat(capture): add clean architecture layers and port CaptureTab
-cb9a773 feat(output): add OutputOrganizer and port PathConfig
+92fc67b docs: update return handoff with real agent progress
+42a175b docs: add return handoff document
+d481502 feat(output): add OutputOrganizer and port PathConfig
+...
 ```
-Portou PathConfig, OutputOrganizer, CaptureTab e StemTab para clean arch.
 
 ### Arquivos de coordenação
 
@@ -126,22 +134,45 @@ Portou PathConfig, OutputOrganizer, CaptureTab e StemTab para clean arch.
 
 ## 4. Próximas tarefas
 
-### Fase 0 (continuação) — codex (tty0)
+### Fase 0 (continuação) — codex (tty0) em `fix/self-contained-deps`
 
-- [x] ~~Criar `AudioLabEditor/`~~ ✅ feito (`2f07815`)
-- [ ] Criar `docs-pre-req/plano-integracao-codex.md`
-- [ ] Embutir yt-dlp, ffmpeg, Demucs no PyInstaller
-- [ ] Launchers .sh/.bat/.desktop para duplo clique
-- [ ] Startup doctor
+- [x] ~~Criar `AudioLabEditor/` base~~ ✅ feito
+- [x] ~~Startup doctor~~ ✅ feito (merged)
+- [x] ~~Launchers .sh/.bat/.desktop~~ ✅ feito (merged)
+- [x] ~~PyInstaller spec~~ ✅ feito (merged)
+- [x] ~~runtime_paths relocatable~~ ✅ feito (merged)
+- [ ] **Criar** `docs-pre-req/plano-integracao-codex.md`
+- [ ] **Embutir yt-dlp, ffmpeg, Demucs no PyInstaller** — spec precisa das dependências reais
+- [ ] **Fase 0.5 Gate:** tester executa com duplo clique sem erro
 
-### Fase 1 (continuação) — opencode (tty1)
+### Fase 1 (continuação) — opencode (tty1) em `feat-output-organization`
 
-- [x] ~~Portar PathConfig~~ ✅ feito (`cb9a773`)
-- [x] ~~Portar CaptureTab~~ ✅ feito (`f95648c`)
-- [x] ~~Portar StemTab + SeparateAudioUseCase~~ ✅ feito (`13d753b`)
-- [ ] Criar `docs-pre-req/plano-saida-projeto-tty1.md`
-- [ ] Output: `{dest}/{projeto}/{tipo}-{timestamp}.{ext}`
-- [ ] Integrar PathConfig no TrimTab e VideoEditorTab
+- [x] ~~Portar PathConfig~~ ✅ feito (merged)
+- [x] ~~Portar CaptureTab~~ ✅ feito (merged)
+- [x] ~~Portar StemTab + SeparateAudioUseCase~~ ✅ feito (merged)
+- [x] ~~Portar TrimTab~~ ✅ feito (merged)
+- [x] ~~Portar VideoEditorTab~~ ✅ feito (merged)
+- [x] ~~OutputOrganizer~~ ✅ feito (merged)
+- [x] ~~Output: `{dest}/{projeto}/{tipo}-{timestamp}.{ext}`~~ ✅ feito
+- [x] ~~PathConfig em todas as 4 abas~~ ✅ feito
+- [ ] **Criar** `docs-pre-req/plano-saida-projeto-tty1.md`
+- [ ] **Fase 1.5 Gate:** tester abre app, configura paths, gera stem
+
+### Próximo marco — Black Box Gate
+
+Após agents completarem tarefas acima, coordenador:
+1. Verifica novos commits no monitor
+2. Executa white box novamente
+3. Tester valida black box (checklist abaixo)
+4. Aprova → merge para `opencode`
+
+**Black Box Checklist:**
+- [ ] 4 abas renderizadas (Capturar, Stems, Cortar, Editor)
+- [ ] Browse source + dest sem paths default
+- [ ] Output folder criado em `{dest}/{projeto}/audio-stem-{modo}-{timestamp}/`
+- [ ] Janela redimensiona sem travamentos
+- [ ] Startup Doctor avisa se ffmpeg faltar
+- [ ] shell=False verificado por auditoria de código
 
 ---
 
@@ -149,10 +180,10 @@ Portou PathConfig, OutputOrganizer, CaptureTab e StemTab para clean arch.
 
 ```bash
 # Compilar tudo
-python -m compileall -q rl-media-studio-v1_6/
+python -m compileall -q AudioLabEditor/src/
 
-# Executar GUI
-cd rl-media-studio-v1_6 && python -m rlmedia
+# Executar GUI (após merge)
+cd AudioLabEditor && python -m presentation.main
 
 # Status dos branches
 ./scripts/monitor.sh status
