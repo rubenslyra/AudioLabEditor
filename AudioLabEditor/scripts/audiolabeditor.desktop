@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=AudioLabEditor
+Comment=Capture, edit and separate audio stems
+Exec=run-linux.sh
+Icon=audiolabeditor
+Terminal=false
+Categories=AudioVideo;Audio;Video;Utility;
+StartupNotify=true

@@ -1,4 +1,3 @@
-from pathlib import Path
 
 from .settings_store import SettingsStore
 
@@ -24,7 +23,3 @@ class PathConfig:
 
     def is_configured(self) -> bool:
         return bool(self.get_source_dir()) and bool(self.get_dest_dir())
-
-    @staticmethod
-    def default_dest_dir() -> Path:
-        return Path.home() / "AudiolabOutput"

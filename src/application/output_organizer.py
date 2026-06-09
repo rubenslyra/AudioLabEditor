@@ -4,7 +4,6 @@ from pathlib import Path
 from src.domain.entities import MediaType, OutputCategory, OutputRequest
 from src.infrastructure.path_config import PathConfig
 
-
 PROJECT_NAME_FALLBACK = "ALE"
 
 
@@ -22,7 +21,7 @@ class OutputOrganizer:
     ) -> Path:
         dest = dest_dir or self._path_config.get_dest_dir()
         if not dest:
-            dest = str(PathConfig.default_dest_dir())
+            raise RuntimeError("Pasta de destino nao configurada. Use as configuracoes ou informe dest_dir.")
 
         project = (project_name or request.project_name or "").strip() or PROJECT_NAME_FALLBACK
         ts = timestamp or datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -56,6 +55,25 @@ class OutputOrganizer:
         )
         return path.parent
 
+    def build_stem_output_dir(
+        self,
+        mode: str,
+        *,
+        dest_dir: str | None = None,
+        project_name: str | None = None,
+        timestamp: str | None = None,
+    ) -> Path:
+        dest = dest_dir or self._path_config.get_dest_dir()
+        if not dest:
+            raise RuntimeError("Pasta de destino nao configurada. Use as configuracoes ou informe dest_dir.")
+
+        project = (project_name or "").strip() or PROJECT_NAME_FALLBACK
+        ts = timestamp or datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        path = Path(dest) / project / f"audio-stem-{mode}-{ts}"
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
     def get_or_create_project_dir(
         self,
         dest_dir: str | None = None,
@@ -63,7 +81,8 @@ class OutputOrganizer:
     ) -> Path:
         dest = dest_dir or self._path_config.get_dest_dir()
         if not dest:
-            dest = str(PathConfig.default_dest_dir())
+            raise RuntimeError("Pasta de destino nao configurada. Use as configuracoes ou informe dest_dir.")
+
         project = (project_name or "").strip() or PROJECT_NAME_FALLBACK
         path = Path(dest) / project
         path.mkdir(parents=True, exist_ok=True)

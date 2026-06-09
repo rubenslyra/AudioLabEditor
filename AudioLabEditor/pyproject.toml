@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "audio-lab-editor"
+version = "0.1.0"
+description = "Desktop app that merges media capture, fast editing, and AI stem separation workflows."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+  { name = "Rubens Lyra" }
+]
+license = { text = "Proprietary" }
+dependencies = [
+  "customtkinter==5.2.2",
+  "yt-dlp>=2025.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9",
+    "ruff>=0.11",
+]
+ai = [
+  "demucs>=4.0.1",
+  "faster-whisper>=1.1.0",
+  "edge-tts>=7.2.8",
+]
+ocr = [
+  "paddleocr>=3.1.1; python_version < '3.13'",
+  "paddlepaddle>=3.1.0; python_version < '3.13'",
+]
+full = [
+  "demucs>=4.0.1",
+  "faster-whisper>=1.1.0",
+  "edge-tts>=7.2.8",
+  "paddleocr>=3.1.1; python_version < '3.13'",
+  "paddlepaddle>=3.1.0; python_version < '3.13'",
+]
+
+[project.scripts]
+audiolab-editor = "presentation.main:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]

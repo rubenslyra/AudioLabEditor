@@ -1,4 +1,3 @@
-from pathlib import Path
 
 import pytest
 
@@ -57,6 +56,20 @@ class TestOutputOrganizer:
         assert path.parent.is_dir()
         assert path.name == "stem-stem-vocals-20260609_150000.wav"
 
+    def test_build_output_path_raises_without_dest(self):
+        config = PathConfig()
+        organizer = OutputOrganizer(config)
+
+        request = OutputRequest(
+            media_type=MediaType.AUDIO,
+            category=OutputCategory.CAPTURE,
+            project_name="Test",
+            extension="mp3",
+        )
+
+        with pytest.raises(RuntimeError, match="Pasta de destino nao configurada"):
+            organizer.build_output_path(request)
+
     def test_build_output_dir(self, tmp_path):
         config = PathConfig()
         organizer = OutputOrganizer(config)
@@ -70,6 +83,41 @@ class TestOutputOrganizer:
 
         assert directory.name == "ProjetoX"
         assert directory.is_dir()
+
+    def test_build_stem_output_dir(self, tmp_path):
+        config = PathConfig()
+        organizer = OutputOrganizer(config)
+
+        directory = organizer.build_stem_output_dir(
+            "vocals",
+            dest_dir=str(tmp_path),
+            project_name="ProjetoX",
+            timestamp="20260609_150000",
+        )
+
+        assert directory.name == "audio-stem-vocals-20260609_150000"
+        assert directory.is_dir()
+        assert directory.parent.name == "ProjetoX"
+
+    def test_build_stem_output_dir_no_project(self, tmp_path):
+        config = PathConfig()
+        organizer = OutputOrganizer(config)
+
+        directory = organizer.build_stem_output_dir(
+            "full4",
+            dest_dir=str(tmp_path),
+            timestamp="20260609_150000",
+        )
+
+        assert directory.name == "audio-stem-full4-20260609_150000"
+        assert directory.parent.name == "ALE"
+
+    def test_build_stem_output_dir_raises_without_dest(self):
+        config = PathConfig()
+        organizer = OutputOrganizer(config)
+
+        with pytest.raises(RuntimeError, match="Pasta de destino nao configurada"):
+            organizer.build_stem_output_dir("vocals")
 
     def test_get_or_create_project_dir(self, tmp_path):
         config = PathConfig()
@@ -88,6 +136,13 @@ class TestOutputOrganizer:
 
         assert directory.name == "ALE"
         assert directory.is_dir()
+
+    def test_get_or_create_project_dir_raises_without_dest(self):
+        config = PathConfig()
+        organizer = OutputOrganizer(config)
+
+        with pytest.raises(RuntimeError, match="Pasta de destino nao configurada"):
+            organizer.get_or_create_project_dir()
 
 
 class TestOutputRequest:
