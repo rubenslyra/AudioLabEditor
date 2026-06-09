@@ -43,3 +43,28 @@ class FFmpegPort:
         progress_cb: ProgressCallback = None,
     ) -> Path:
         ...
+
+
+@dataclass
+class StemRequest:
+    source_path: Path
+    mode: str = "vocals"
+    output_format: str = "wav"
+    dest_dir: str = ""
+    project_name: str = ""
+
+
+@dataclass
+class StemResult:
+    output_dir: Path
+    mode: str
+    output_format: str
+    source_name: str
+
+
+class DemucsPort:
+    def separate(self, request: StemRequest, progress_cb: ProgressCallback = None) -> StemResult:
+        ...
+
+
+
