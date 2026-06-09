@@ -33,9 +33,7 @@ class CaptureTab:
         self._last_output_path: Path | None = None
 
         self.url_var = ctk.StringVar()
-        saved = self._path_config.get_dest_dir()
-        default_dest = saved if saved else str(PathConfig.default_dest_dir())
-        self.output_dir_var = ctk.StringVar(value=default_dest)
+        self.output_dir_var = ctk.StringVar(value=self._path_config.get_dest_dir())
         self.mode_var = ctk.StringVar(value="Video original")
         self.quality_var = ctk.StringVar(value="Alta")
         self.audio_format_var = ctk.StringVar(value="mp3")
