@@ -2,61 +2,64 @@
 
 ## Contexto
 
-Você é o Agente codex no terminal tty0, alocado para trabalhar na mescla dos projetos
-`rl-media-studio-v1_6/` (GUI desktop) e `MVP-AudioStemLab/` (separação de stems por IA).
-
-O objetivo é garantir que o executável de produção funcione com **duplo clique**,
-sem depender de variáveis de ambiente para encontrar dependências.
+Você é o Agente codex no terminal tty0. Deve **criar o novo projeto da aplicação
+mesclada** em uma pasta chamada `AudioLabEditor/` (ao lado de `rl-media-studio-v1_6/`
+e `MVP-AudioStemLab/`), e registrar o plano em `docs-pre-req/`.
 
 ## Sua Branch
 
 **`fix/self-contained-deps`** — criada a partir de `opencode`.
 
-Trabalhe dentro de `rl-media-studio-v1_6/` (e também no que for necessário
-em `MVP-AudioStemLab/`).
+## Tarefas
 
-## Tarefas Prioritárias
+### 0. Criar estrutura do novo projeto
 
-### 1. Empacotar TODAS as dependências no executável
+```
+AudioLabEditor/          # nova pasta, nome da aplicacao alvo
+├── src/
+│   ├── presentation/    # GUI (CustomTkinter)
+│   ├── application/     # use cases
+│   ├── domain/          # entidades
+│   └── infrastructure/  # ffmpeg, yt-dlp, demucs, storage
+├── tests/
+├── docs/
+│   └── pre-req/         # novo arquivo nesta pasta
+├── scripts/
+└── pyproject.toml
+```
 
-O PyInstaller não pode deixar de fora:
-- `yt-dlp` (embarcado, sem chamada externa)
-- `ffmpeg` / `ffprobe` (binários devem vir junto ao executável)
-- Modelos do Demucs (ou download sob demanda com cache local ao lado do .exe)
-- `faster-whisper`, `paddleocr` (se incluídos no perfil)
+### 1. Criar docs-pre-req/plano-integracao-codex.md
 
-### 2. Path resolution relocatable
+Registrar o plano de integração: dependências, launchers, path resolution.
 
-- O executável deve encontrar suas dependências na **própria pasta** onde está
-  (ou em `_internal/`, `lib/` relativo ao .exe)
-- **NÃO** usar `PATH`, `APPDATA`, `XDG_*` ou `~` para lookup de binários
-- Usar `sys.executable` ou `sys._MEIPASS` como âncora
+### 2. Empacotar TODAS as dependências (PyInstaller)
 
-### 3. Corrigir launchers (.sh / .bat / .desktop)
+- yt-dlp, ffmpeg/ffprobe, Demucs embarcados
+- Nada em PATH/ambiente — tudo relativo ao executável
 
-- Testar duplo clique: o programa precisa abrir a janela GUI diretamente
-- Se houver `.sh` ou `.bat`, garantir que resolvem o caminho relativo
-  ao diretório do script (`"$(dirname "$0")"` no Linux, `%~dp0` no Windows)
-- Remover dependência de terminal — se houver erro, mostrar messagebox, não print
+### 3. Launchers para duplo clique
+
+- .sh / .bat / .desktop — caminhos relativos ao diretório do script
+- Sem dependência de terminal — erros viram messagebox
 
 ### 4. Startup doctor
 
-Adicionar verificação na inicialização:
-- Se falta yt-dlp, ffmpeg, ou modelo Demucs → mostrar dialog claro
-- Se algo não for encontrado, abortar com mensagem amigável
-- **Nunca** crashar silenciosamente
-
-### 5. Cross-platform
-
-- Windows: `.exe` com duplo clique
-- Linux: `.desktop` + binário portátil
-- macOS: `.app` bundle
+- Verificar yt-dlp, ffmpeg, Demucs na inicialização
+- Se faltar, mostrar dialog claro — nunca crashar
 
 ---
 
-## Observações Finais
+## Commites
 
-- Já tivemos problemas com executáveis que não abriam com duplo clique
-  e não encontravam dependências. **Não repetir esses erros.**
-- Se precisar de alterações no `MVP-AudioStemLab/`, faça.
-- Commite na branch `fix/self-contained-deps`.
+```
+codex/
+├── INSTRUCTIONS_CODEX.md        (instrucoes)
+├── docs-pre-req/
+│   └── plano-integracao-codex.md (seu plano)
+└── AudioLabEditor/              (novo projeto)
+    ├── src/...
+    ├── scripts/...
+    └── pyproject.toml
+```
+
+Commite na branch `fix/self-contained-deps`.
