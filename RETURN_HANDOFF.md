@@ -30,13 +30,13 @@ cd ~/source/TestesTECNICOS/AudioLabEditor
 ./scripts/monitor.sh status
 ```
 
-Resultado esperado:
+Resultado esperado (atualizado em 2026-06-09):
 
-| Agente | Branch | Status esperado |
-|--------|--------|----------------|
-| codex | `fix/self-contained-deps` | ⏳ pode ter commits pendentes |
-| opencode (tty1) | `feat-output-organization` | ⏳ pode ter commits pendentes |
-| coordenador | `feat/path-config-ui` | ✅ concluído (marco-zero tagueado) |
+| Agente | Branch | Status | Último commit |
+|--------|--------|--------|---------------|
+| codex (tty0) | `fix/self-contained-deps` | ✅ trabalhou | `2f07815` — criou `AudioLabEditor/` base |
+| opencode (tty1) | `feat-output-organization` | ✅ trabalhou | `13d753b` — portou stems com clean arch |
+| coordenador | `feat/path-config-ui` | ✅ coordenação | `42a175b` — handoff document |
 
 ### 2.3 Se houver novos commits (agentes trabalharam)
 
@@ -82,20 +82,33 @@ cat INSTRUCTIONS_TTY1.md
 
 ---
 
-## 3. Estado Atual (marco-zero)
+## 3. Estado Atual (após agentes trabalharem)
 
-**Tag:** `marco-zero`  
-**Commit:** `b6e7c08`  
-**Data:** 2026-06-09 13:48 UTC
+**Tag base:** `marco-zero` (`b6e7c08`)  
+**Data:** 2026-06-09
 
 ```
-Top-level:  8 arquivos de coordenação
-RLMS repo:  7436947 (stem tab + path config + cleanup)
-AudioLab:   7bfa410 (original, untouched)
-Peso total: 67MB (source-only)
+Top-level:  9 arquivos de coordenação
+Peso total: ~70MB (source-only, limpo)
 ```
 
-### Arquivos de coordenação criados
+### Commits dos agentes
+
+**codex (tty0) — `fix/self-contained-deps`:**
+```
+2f07815 feat(scaffold): create AudioLabEditor portable app base
+```
+Criou a pasta `AudioLabEditor/` com estrutura portátil.
+
+**opencode (tty1) — `feat-output-organization`:**
+```
+13d753b feat(stem): add SeparateAudioUseCase, Demucs adapter, port StemTab
+f95648c feat(capture): add clean architecture layers and port CaptureTab
+cb9a773 feat(output): add OutputOrganizer and port PathConfig
+```
+Portou PathConfig, OutputOrganizer, CaptureTab e StemTab para clean arch.
+
+### Arquivos de coordenação
 
 | Arquivo | Propósito |
 |---------|-----------|
@@ -104,39 +117,31 @@ Peso total: 67MB (source-only)
 | `INSTRUCTIONS_CODEX.md` | Instruções para codex (tty0) |
 | `INSTRUCTIONS_TTY1.md` | Instruções para opencode (tty1) |
 | `DEVELOPER_HANDBOOK.md` | Manual para desenvolvimento manual |
+| `RETURN_HANDOFF.md` | Este documento — handoff de retorno |
 | `MARCO_ZERO.md` | Checkpoint do estado inicial |
 | `scripts/monitor.py` | Daemon de monitoramento |
 | `scripts/monitor.sh` | Wrapper start/stop/status |
 
-### Código entregue (em rl-media-studio-v1_6/)
-
-| Arquivo | O que faz |
-|---------|-----------|
-| `src/rlmedia/core/storage/path_config.py` | Persistência de paths origem/destino |
-| `src/rlmedia/core/media/stem_service.py` | Serviço Demucs com progresso |
-| `src/rlmedia/ui/tabs/stem_tab.py` | Aba "Separador de Stems" na GUI |
-| `src/rlmedia/ui/navigation.py` | +1 tab label |
-| `src/rlmedia/ui/main_window.py` | Import + instância do StemTab |
-
 ---
 
-## 4. Próximas tarefas (Fase 0 e 1)
+## 4. Próximas tarefas
 
-### Fase 0 — codex (tty0) `fix/self-contained-deps`
+### Fase 0 (continuação) — codex (tty0)
 
-- [ ] Criar pasta `AudioLabEditor/` (novo projeto alvo)
+- [x] ~~Criar `AudioLabEditor/`~~ ✅ feito (`2f07815`)
 - [ ] Criar `docs-pre-req/plano-integracao-codex.md`
 - [ ] Embutir yt-dlp, ffmpeg, Demucs no PyInstaller
 - [ ] Launchers .sh/.bat/.desktop para duplo clique
 - [ ] Startup doctor
 
-### Fase 1 — opencode (tty1) `feat-output-organization`
+### Fase 1 (continuação) — opencode (tty1)
 
-- [ ] Criar pasta `AudioLabEditor/` (novo projeto alvo)
+- [x] ~~Portar PathConfig~~ ✅ feito (`cb9a773`)
+- [x] ~~Portar CaptureTab~~ ✅ feito (`f95648c`)
+- [x] ~~Portar StemTab + SeparateAudioUseCase~~ ✅ feito (`13d753b`)
 - [ ] Criar `docs-pre-req/plano-saida-projeto-tty1.md`
-- [ ] Portar PathConfig para o novo projeto
 - [ ] Output: `{dest}/{projeto}/{tipo}-{timestamp}.{ext}`
-- [ ] Integrar PathConfig nas abas CaptureTab, TrimTab, VideoEditorTab
+- [ ] Integrar PathConfig no TrimTab e VideoEditorTab
 
 ---
 
