@@ -1,0 +1,126 @@
+# -*- mode: python ; coding: utf-8 -*-
+
+import os
+import shutil
+from pathlib import Path
+
+from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs, collect_submodules, copy_metadata
+
+
+project_root = Path(SPECPATH).parent
+src_root = project_root / "src"
+profile = os.environ.get("AUDIO_LAB_EDITOR_PROFILE", "ai").lower()
+
+
+def safe_collect_submodules(package_name):
+    try:
+        return collect_submodules(package_name)
+    except Exception:
+        return []
+
+
+def safe_collect_data_files(package_name):
+    try:
+        return collect_data_files(package_name, include_py_files=False)
+    except Exception:
+        return []
+
+
+def safe_collect_dynamic_libs(package_name):
+    try:
+        return collect_dynamic_libs(package_name)
+    except Exception:
+        return []
+
+
+def safe_copy_metadata(distribution_name):
+    try:
+        return copy_metadata(distribution_name)
+    except Exception:
+        return []
+
+
+def collect_tool_binary(name, env_name):
+    explicit = os.environ.get(env_name)
+    candidate = Path(explicit) if explicit else None
+    if candidate and candidate.exists():
+        return [(str(candidate), "bin")]
+    resolved = shutil.which(name)
+    if resolved:
+        return [(resolved, "bin")]
+    return []
+
+
+datas = []
+binaries = []
+hiddenimports = []
+
+binaries += collect_tool_binary("ffmpeg", "AUDIO_LAB_EDITOR_FFMPEG")
+binaries += collect_tool_binary("ffprobe", "AUDIO_LAB_EDITOR_FFPROBE")
+
+for package_name in ["customtkinter", "yt_dlp"]:
+    datas += safe_collect_data_files(package_name)
+    hiddenimports += safe_collect_submodules(package_name)
+
+for distribution_name in ["customtkinter", "yt-dlp"]:
+    datas += safe_copy_metadata(distribution_name)
+
+if profile in {"ai", "full"}:
+    hiddenimports += safe_collect_submodules("demucs")
+    hiddenimports += safe_collect_submodules("faster_whisper")
+    hiddenimports += safe_collect_submodules("edge_tts")
+    binaries += safe_collect_dynamic_libs("ctranslate2")
+    for distribution_name in ["demucs", "faster-whisper", "edge-tts", "ctranslate2"]:
+        datas += safe_copy_metadata(distribution_name)
+
+if profile == "full":
+    hiddenimports += safe_collect_submodules("paddleocr")
+    hiddenimports += safe_collect_submodules("paddle")
+    binaries += safe_collect_dynamic_libs("paddle")
+    for distribution_name in ["paddleocr", "paddlepaddle"]:
+        datas += safe_copy_metadata(distribution_name)
+
+excludes = ["pytest", "numpy.tests", "PIL.tests"]
+if profile == "base":
+    excludes += ["demucs", "faster_whisper", "edge_tts", "paddle", "paddleocr"]
+if profile == "ai":
+    excludes += ["paddle", "paddleocr"]
+
+
+a = Analysis(
+    [str(src_root / "presentation" / "main.py")],
+    pathex=[str(src_root)],
+    binaries=binaries,
+    datas=datas,
+    hiddenimports=hiddenimports,
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=excludes,
+    noarchive=False,
+    optimize=0,
+)
+pyz = PYZ(a.pure)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name="AudioLabEditor",
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=False,
+)
+
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name="AudioLabEditor",
+)
