@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional
 
-
 ProgressCallback = Optional[Callable[[float, str], None]]
 
 
@@ -65,6 +64,3 @@ class StemResult:
 class DemucsPort:
     def separate(self, request: StemRequest, progress_cb: ProgressCallback = None) -> StemResult:
         ...
-
-
-

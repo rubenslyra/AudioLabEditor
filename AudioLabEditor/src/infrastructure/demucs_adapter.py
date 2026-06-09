@@ -6,10 +6,8 @@ import sys
 import time
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
-from typing import Callable
 
-from src.domain.interfaces import DemucsPort, StemRequest, StemResult, ProgressCallback
-
+from domain.interfaces import DemucsPort, ProgressCallback, StemRequest, StemResult
 
 STEM_MODES = ("vocals", "full4", "extended6")
 STEM_FORMATS = ("wav", "mp3", "flac")

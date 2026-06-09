@@ -1,20 +1,18 @@
-from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
 
-from src.application.capture_media_use_case import (
+from application.capture_media_use_case import (
     CAPTURE_MODE_AUDIO_ONLY,
     CAPTURE_MODE_VIDEO_COMPRESSED,
     CAPTURE_MODE_VIDEO_ORIGINAL,
     CaptureMediaRequest,
     CaptureMediaUseCase,
 )
-from src.domain.entities import MediaType, OutputCategory, OutputRequest
-from src.application.output_organizer import OutputOrganizer
-from src.infrastructure.path_config import PathConfig
-from src.presentation.widgets import LogBox
+from application.output_organizer import OutputOrganizer
+from infrastructure.path_config import PathConfig
+from presentation.widgets import LogBox
 
 
 class CaptureTab:
@@ -128,7 +126,8 @@ class CaptureTab:
         self._on_mode_changed()
 
     def _reveal_file(self):
-        import subprocess, sys
+        import subprocess
+        import sys
         path = self._last_output_path
         if not path:
             return

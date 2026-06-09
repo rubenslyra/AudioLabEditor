@@ -1,9 +1,8 @@
 from pathlib import Path
-from typing import Callable, Optional
 
 import yt_dlp
 
-from src.domain.interfaces import DownloaderPort, MediaInfo, ProgressCallback
+from domain.interfaces import DownloaderPort, MediaInfo, ProgressCallback
 
 
 class YtDlpAdapter(DownloaderPort):

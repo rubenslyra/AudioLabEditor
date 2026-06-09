@@ -1,5 +1,4 @@
-
-from .settings_store import SettingsStore
+from infrastructure.settings_store import SettingsStore
 
 
 class PathConfig:

@@ -1,7 +1,5 @@
-from pathlib import Path
-
-from src.domain.interfaces import DemucsPort, StemRequest, StemResult, ProgressCallback
-from src.infrastructure.path_config import PathConfig
+from domain.interfaces import DemucsPort, ProgressCallback, StemRequest, StemResult
+from infrastructure.path_config import PathConfig
 
 
 class SeparateAudioUseCase:

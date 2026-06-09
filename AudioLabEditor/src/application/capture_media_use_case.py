@@ -1,11 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Optional
 
-from src.domain.entities import MediaType, OutputCategory, OutputRequest
-from src.domain.interfaces import DownloaderPort, FFmpegPort, MediaInfo, ProgressCallback
-from src.application.output_organizer import OutputOrganizer
-
+from domain.interfaces import DownloaderPort, FFmpegPort, MediaInfo, ProgressCallback
 
 CAPTURE_MODE_VIDEO_ORIGINAL = "video_original"
 CAPTURE_MODE_VIDEO_COMPRESSED = "video_compressed"

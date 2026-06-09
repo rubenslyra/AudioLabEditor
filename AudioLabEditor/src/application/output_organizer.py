@@ -1,8 +1,8 @@
 from datetime import datetime
 from pathlib import Path
 
-from src.domain.entities import MediaType, OutputCategory, OutputRequest
-from src.infrastructure.path_config import PathConfig
+from domain.entities import MediaType, OutputCategory, OutputRequest
+from infrastructure.path_config import PathConfig
 
 PROJECT_NAME_FALLBACK = "ALE"
 

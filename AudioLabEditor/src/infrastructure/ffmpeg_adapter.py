@@ -1,8 +1,6 @@
 from pathlib import Path
-from typing import Callable, Optional
 
-from src.domain.interfaces import FFmpegPort, ProgressCallback
-
+from domain.interfaces import FFmpegPort, ProgressCallback
 
 QUALITY_PRESETS = {
     "Alta": {"crf": 18, "preset": "slow", "audio_bitrate": 192},

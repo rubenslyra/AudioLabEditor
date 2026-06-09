@@ -3,10 +3,10 @@ from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
 
-from src.application.separate_audio_use_case import SeparateAudioUseCase
-from src.domain.interfaces import StemRequest
-from src.infrastructure.path_config import PathConfig
-from src.presentation.widgets import LogBox
+from application.separate_audio_use_case import SeparateAudioUseCase
+from domain.interfaces import StemRequest
+from infrastructure.path_config import PathConfig
+from presentation.widgets import LogBox
 
 
 class StemTab:
@@ -109,7 +109,8 @@ class StemTab:
         ctk.CTkButton(self.actions, text="Limpar logs", width=150, command=lambda: self.logs.delete("1.0", "end")).pack(side="left")
 
     def _reveal_file(self):
-        import subprocess, sys
+        import subprocess
+        import sys
         path = self._last_output_dir
         if not path:
             return

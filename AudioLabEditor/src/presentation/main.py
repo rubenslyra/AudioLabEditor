@@ -2,13 +2,13 @@ import tkinter as tk
 from tkinter import messagebox
 
 import customtkinter as ctk
-
-from application.bootstrap import validate_startup
 from application.capture_media_use_case import CaptureMediaUseCase
 from application.separate_audio_use_case import SeparateAudioUseCase
 from infrastructure.demucs_adapter import DemucsSubprocessAdapter
 from infrastructure.downloader_adapter import YtDlpAdapter
 from infrastructure.ffmpeg_adapter import FFmpegAdapter
+
+from application.bootstrap import validate_startup
 from presentation.tabs.capture_tab import CaptureTab
 from presentation.tabs.stem_tab import StemTab
 from presentation.tabs.trim_tab import TrimTab

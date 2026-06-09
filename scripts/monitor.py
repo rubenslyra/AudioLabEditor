@@ -14,7 +14,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-RLMS_REPO = REPO_ROOT / "rl-media-studio-v1_6"
 
 TRACKED = {
     "tty0 (codex)": {
@@ -23,12 +22,12 @@ TRACKED = {
         "phase": "0",
     },
     "tty1 (opencode)": {
-        "repo": RLMS_REPO,
+        "repo": REPO_ROOT,
         "branch": "feat-output-organization",
         "phase": "1",
     },
-    "tty2 (opencode)": {
-        "repo": RLMS_REPO,
+    "tty3 (coordenador)": {
+        "repo": REPO_ROOT,
         "branch": "feat/path-config-ui",
         "phase": "1-2",
     },
