@@ -3,10 +3,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_appimage_build_defaults_to_base_profile():
-    build_script = (ROOT / "scripts" / "build-appimage.sh").read_text(encoding="utf-8")
+def test_install_script_defaults_to_base_profile():
+    install_script = (ROOT / "scripts" / "install.sh").read_text(encoding="utf-8")
 
-    assert 'PROFILE="${AUDIO_LAB_EDITOR_PROFILE:-base}"' in build_script
+    assert 'PROFILE="${AUDIO_LAB_EDITOR_PROFILE:-base}"' in install_script
 
 
 def test_pyinstaller_spec_still_supports_ai_profile():

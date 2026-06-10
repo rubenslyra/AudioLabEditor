@@ -9,7 +9,7 @@ from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs, co
 
 project_root = Path(SPECPATH).resolve().parent
 src_root = project_root / "src"
-profile = os.environ.get("AUDIO_LAB_EDITOR_PROFILE", "ai").lower()
+profile = os.environ.get("AUDIO_LAB_EDITOR_PROFILE", "base").lower()
 
 
 def safe_collect_submodules(package_name):

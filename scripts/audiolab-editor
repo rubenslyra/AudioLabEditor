@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$HERE/.." && pwd)"
+
+if [ -x "$ROOT/dist/AudioLabEditor" ]; then
+  exec "$ROOT/dist/AudioLabEditor" "$@"
+fi
+
+export PYTHONPATH="${ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}"
+cd "$ROOT" && exec python3 -m presentation.main "$@"

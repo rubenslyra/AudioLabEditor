@@ -1,20 +1,61 @@
-# AudioLabEditor
+# AudioLab Editor
 
 Applied Multimedia Lab — fusão de MVP-AudioStemLab (v0.3.8) + RL Media Studio (v1.10.0-dev).
 
-## Branches
+Aplicativo desktop para captura, edição e separação de áudio/vídeo com IA.
 
-| Branch | Agente | Foco |
-|--------|--------|------|
-| `opencode` | — | Base / coordenação |
-| `fix/self-contained-deps` | codex (tty0) | Empacotar dependências, corrigir launchers |
-| `feat/path-config-ui` | opencode (tty1) | Seletor de path, organização por projeto |
+## Instalação
 
-## Estrutura
+### Usuários Linux
 
+```bash
+# 1. Clone o repositório
+git clone https://github.com/anomalyco/audiolab-editor
+cd audiolab-editor
+
+# 2. Instale (build + deploy)
+./scripts/install.sh
+
+# 3. Pronto! Procure por "AudioLab Editor" no menu
+#    Ou execute no terminal:
+audiolab-editor
 ```
-AudioLabEditor/
-├── docs-pre-req/           # Análises pré-requisito
-├── MVP-AudioStemLab/       # Audio stem separation (CLI)
-└── rl-media-studio-v1_6/   # Desktop multimedia studio (GUI)
+
+### Usuários avançados (desenvolvimento)
+
+```bash
+# Rodar direto do código-fonte
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+./scripts/audiolab-editor
 ```
+
+### Perfis de build
+
+| Profile | Dependências | Tamanho |
+|---------|-------------|---------|
+| `base` (padrão) | customtkinter, pillow, yt-dlp | ~132 MB |
+| `ai` | + demucs, faster-whisper, edge-tts, torch | ~4+ GB |
+| `full` | + paddleocr, paddlepaddle | ~5+ GB |
+
+```bash
+AUDIO_LAB_EDITOR_PROFILE=ai ./scripts/install.sh
+```
+
+## Funcionalidades
+
+- **Captura de mídia** — Baixa vídeo/áudio de URLs (YouTube, etc.)
+- **Corte de áudio** — Apara arquivos com export MP3
+- **Separação de stems** — IA para isolar vocais, bateria, baixo (Demucs)
+- **Edição de vídeo** — Corte com presets de qualidade
+
+## Desinstalação
+
+```bash
+./scripts/uninstall.sh
+```
+
+## Licença
+
+MIT
