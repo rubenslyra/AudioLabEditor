@@ -8,23 +8,25 @@ BUILD="$ROOT/dist"
 APPDIR="$BUILD/$APP.AppDir"
 PROFILE="${AUDIO_LAB_EDITOR_PROFILE:-base}"
 
-echo "==> PyInstaller build (profile=$PROFILE)..."
+echo "==> PyInstaller onefile build (profile=$PROFILE)..."
 cd "$ROOT"
 rm -rf dist build
 AUDIO_LAB_EDITOR_PROFILE="$PROFILE" python3 -m PyInstaller "$HERE/AudioLabEditor.spec" --log-level WARN
 
 echo "==> Creating AppDir..."
-mkdir -p "$APPDIR/usr"
-cp -a "$BUILD/$APP/"* "$APPDIR/usr/"
+mkdir -p "$APPDIR"
+cp "$BUILD/$APP" "$APPDIR/$APP"
 
 cat > "$APPDIR/AppRun" <<'APPRUN'
 #!/usr/bin/env bash
 HERE="$(dirname "$(readlink -f "$0")")"
-exec "$HERE/usr/AudioLabEditor" "$@"
+exec "$HERE/AudioLabEditor" "$@"
 APPRUN
 chmod +x "$APPDIR/AppRun"
 
-cp "$BUILD/$APP/_internal/presentation/assets/logo.png" "$APPDIR/$APP.png"
+# Extract icon from the internal assets (available after first run)
+# Fallback: use source icon
+cp "$ROOT/src/presentation/assets/logo.png" "$APPDIR/$APP.png"
 
 cat > "$APPDIR/$APP.desktop" <<DESKTOP
 [Desktop Entry]
