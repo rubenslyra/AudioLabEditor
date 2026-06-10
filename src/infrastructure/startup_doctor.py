@@ -5,7 +5,7 @@ from domain.dependencies import DependencyStatus
 from infrastructure.runtime_paths import IS_FROZEN, app_data_dir, find_executable
 
 BASE_TOOLS = ("ffmpeg", "ffprobe")
-OPTIONAL_MODULES = ("demucs",)
+OPTIONAL_MODULES = ("torch",)
 FULL_MODULES = ("faster_whisper", "paddleocr")
 
 

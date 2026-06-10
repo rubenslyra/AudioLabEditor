@@ -109,7 +109,6 @@ for distribution_name in ["customtkinter", "yt-dlp", "pillow"]:
 
 if profile in {"ai", "full"}:
     ai_packages = [
-        ("demucs", "demucs", False, True),
         ("dora", "dora-search", False, True),
         ("julius", "julius", False, True),
         ("lameenc", "lameenc", True, True),
@@ -130,6 +129,7 @@ if profile in {"ai", "full"}:
         datas += package_datas
         binaries += package_binaries
         hiddenimports += package_hiddenimports
+    hiddenimports += ["demucs"]
 
 if profile == "full":
     full_packages = [
@@ -154,9 +154,13 @@ if profile == "ai":
     excludes += ["paddle", "paddleocr"]
 
 
+analysis_paths = [str(src_root)]
+if profile in {"ai", "full"}:
+    analysis_paths.append(str(project_root))
+
 a = Analysis(
     [str(src_root / "presentation" / "main.py")],
-    pathex=[str(src_root)],
+    pathex=analysis_paths,
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,

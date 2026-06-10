@@ -15,12 +15,12 @@ def test_system_tools_are_required():
     assert ffprobe.required is True
 
 
-def test_demucs_is_optional_in_ai_profile():
+def test_torch_is_optional_in_ai_profile():
     statuses = check_startup_dependencies("ai")
 
-    demucs = next(s for s in statuses if s.name == "demucs")
+    torch = next(s for s in statuses if s.name == "torch")
 
-    assert demucs.required is False
+    assert torch.required is False
 
 
 def test_faster_whisper_is_optional_in_full_profile():
@@ -44,7 +44,7 @@ def test_startup_error_ignores_optional_missing():
 
     err = message
     if err:
-        assert "demucs" not in err
+        assert "torch" not in err
 
 
 def test_startup_warning_includes_optional_missing():

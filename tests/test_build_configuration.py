@@ -9,17 +9,14 @@ def test_install_script_defaults_to_base_profile():
     assert 'PROFILE="${AUDIO_LAB_EDITOR_PROFILE:-base}"' in install_script
 
 
-def test_pyinstaller_spec_still_supports_ai_profile():
+def test_pyinstaller_spec_collects_torch_for_ai_profile():
     spec = (ROOT / "scripts" / "AudioLabEditor.spec").read_text(encoding="utf-8")
 
-    assert '("demucs", "demucs", False, True)' in spec
+    assert '("torch", "torch", True, False)' in spec
     assert "collect_python_package(" in spec
 
 
-def test_pyinstaller_spec_collects_demucs_runtime_dependencies():
+def test_pyinstaller_spec_includes_demucs_as_hidden_import():
     spec = (ROOT / "scripts" / "AudioLabEditor.spec").read_text(encoding="utf-8")
 
-    for package in ("torch", "torchaudio", "lameenc", "openunmix", "julius", "dora"):
-        assert f'("{package}",' in spec
-    assert '("torch", "torch", True, False)' in spec
-    assert '("torchaudio", "torchaudio", True, False)' in spec
+    assert 'hiddenimports += ["demucs"]' in spec

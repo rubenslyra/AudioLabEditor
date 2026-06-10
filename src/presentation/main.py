@@ -57,11 +57,11 @@ def build_window(app, splash=None):
     step(0.20, "Criando adaptadores...")
     downloader = YtDlpAdapter()
     ffmpeg = FFmpegAdapter()
-    demucs_available = importlib.util.find_spec("demucs") is not None
-    demucs = DemucsSubprocessAdapter() if demucs_available else None
+    torch_available = importlib.util.find_spec("torch") is not None
+    demucs = DemucsSubprocessAdapter() if torch_available else None
 
     capture_use_case = CaptureMediaUseCase(downloader=downloader, ffmpeg=ffmpeg)
-    separate_use_case = SeparateAudioUseCase(demucs=demucs) if demucs_available else None
+    separate_use_case = SeparateAudioUseCase(demucs=demucs) if torch_available else None
 
     step(0.35, "Montando interface...")
 

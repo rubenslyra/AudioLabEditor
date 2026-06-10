@@ -7,5 +7,5 @@ if [ -x "$ROOT/dist/AudioLabEditor" ]; then
   exec "$ROOT/dist/AudioLabEditor" "$@"
 fi
 
-export PYTHONPATH="${ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}"
+export PYTHONPATH="${ROOT}/src:${ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
 cd "$ROOT" && exec python3 -m presentation.main "$@"

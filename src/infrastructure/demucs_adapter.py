@@ -27,10 +27,10 @@ class DemucsSubprocessAdapter(DemucsPort):
         self._frozen = frozen
 
     def separate(self, request: StemRequest, progress_cb: ProgressCallback = None) -> StemResult:
-        if importlib.util.find_spec("demucs") is None:
+        if importlib.util.find_spec("torch") is None:
             raise MissingDependencyError(
-                "Demucs nao encontrado no ambiente.\n"
-                "Verifique se as dependencias de IA foram instaladas (pip install demucs)."
+                "PyTorch nao encontrado no ambiente.\n"
+                "Instale as dependencias de IA: pip install 'audiolab-editor[ai]'"
             )
 
         self._notify(progress_cb, 0.0, "Iniciando separacao de stems com Demucs...")
@@ -129,7 +129,7 @@ class DemucsSubprocessAdapter(DemucsPort):
             try:
                 from demucs.separate import main as demucs_main
             except Exception as exc:
-                raise MissingDependencyError("Demucs empacotado de forma incompleta.") from exc
+                raise MissingDependencyError("PyTorch/demucs empacotado de forma incompleta.") from exc
             stream = _ProgressStream(progress_cb)
             with redirect_stdout(stream), redirect_stderr(stream):
                 demucs_main()
