@@ -2,11 +2,13 @@ import json
 import threading
 from pathlib import Path
 
+from infrastructure.runtime_paths import app_data_dir
+
 
 class SettingsStore:
     def __init__(self, file_path: Path | None = None):
         if file_path is None:
-            file_path = Path.home() / ".config" / "audiolab-editor" / "settings.json"
+            file_path = app_data_dir() / "settings.json"
         self.file_path = file_path
         self.file_path.parent.mkdir(parents=True, exist_ok=True)
         self._lock = threading.Lock()

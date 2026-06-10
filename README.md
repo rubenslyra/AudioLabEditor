@@ -10,15 +10,19 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.14-blue?logo=python" alt="Python 3.14">
-  <img src="https://img.shields.io/badge/platform-linux--x64-lightgrey" alt="Platform">
+  <img src="https://img.shields.io/badge/platform-linux|windows|macOS-lightgrey" alt="Platform">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
+  <img src="https://img.shields.io/github/actions/workflow/status/rubenslyra/AudioLabEditor/ci.yml?label=CI&logo=github" alt="CI">
+  <img src="https://img.shields.io/github/v/release/rubenslyra/AudioLabEditor?logo=github" alt="Release">
   <img src="https://img.shields.io/badge/build-PyInstaller%206.20-orange" alt="Build">
   <img src="https://img.shields.io/badge/UI-CustomTkinter%205.2-ff69b4" alt="UI">
 </p>
 
 ---
 
-AudioLab Editor é um aplicativo desktop para **captura**, **corte**, **separação de stems** (fontes sonoras) e **transcrição** de mídia, construído com Python e CustomTkinter. Utiliza IA (Demucs) para separação de instrumentos e vocais, yt-dlp para captura de mídia online e FFmpeg para processamento audiovisual.
+AudioLab Editor é um aplicativo desktop para **captura**, **corte**, **separação de stems** (fontes sonoras) e **transcrição** de mídia. Construído com Python e CustomTkinter, utiliza IA (Demucs) para separação de instrumentos e vocais, yt-dlp para captura de mídia online e FFmpeg para processamento audiovisual.
+
+Funciona em **Linux**, **Windows** e **macOS**.
 
 ---
 
@@ -50,6 +54,18 @@ AudioLab Editor é um aplicativo desktop para **captura**, **corte**, **separaç
 
 ---
 
+## Downloads
+
+| Plataforma | Arquivo |
+|---|---|
+| Linux x86_64 | [`audiolab-editor-linux-x86_64`](https://github.com/rubenslyra/AudioLabEditor/releases/latest) |
+| Windows x86_64 | [`audiolab-editor-windows-x86_64.exe`](https://github.com/rubenslyra/AudioLabEditor/releases/latest) |
+| macOS x86_64 | [`audiolab-editor-macos-x86_64`](https://github.com/rubenslyra/AudioLabEditor/releases/latest) |
+
+> **Nota sobre IA**: Os binários incluem apenas funcionalidades core. Para usar separação de stems, abra a aba **Stems** e clique em "Instalar dependências" — o app baixará torch, Demucs e demais pacotes via pip.
+
+---
+
 ## Arquitetura
 
 ```
@@ -75,29 +91,39 @@ AudioLabEditor/
 ## Instalação
 
 ### Pré-requisitos
-- **Python 3.14+** e **pip** instalados no sistema
-- **FFmpeg** (`ffmpeg` e `ffprobe` disponíveis no PATH ou baixados automaticamente)
-- Linux x86_64 (builds para outras plataformas em desenvolvimento)
+- **Python 3.11+** e **pip** instalados no sistema (necessário apenas para funcionalidades de IA)
+- **FFmpeg** (`ffmpeg` e `ffprobe` disponíveis no PATH ou baixados automaticamente pelo app)
 
-### Via instalador (recomendado)
+### Linux
 
 ```bash
 # Baixe o binário da última release
-chmod +x audiolab-editor
-
-# Execute diretamente
-./audiolab-editor
+chmod +x audiolab-editor-linux-x86_64
+./audiolab-editor-linux-x86_64
 ```
 
-### Via script de instalação
+Instalação com integração ao menu de aplicativos:
 
 ```bash
-# Build + instala em ~/.local/bin
 ./scripts/install.sh
-
-# Para instalar em /usr/local (requer sudo)
-sudo ./scripts/install.sh --system
 ```
+
+### Windows
+
+```powershell
+# Baixe o executável da última release
+.\audiolab-editor-windows-x86_64.exe
+```
+
+### macOS
+
+```bash
+# Baixe o binário da última release
+chmod +x audiolab-editor-macos-x86_64
+./audiolab-editor-macos-x86_64
+```
+
+> **Aviso**: No macOS, pode ser necessário autorizar o binário em **Preferências do Sistema > Segurança e Privacidade**.
 
 ### Desenvolvimento
 
@@ -105,18 +131,15 @@ sudo ./scripts/install.sh --system
 git clone https://github.com/rubenslyra/AudioLabEditor.git
 cd AudioLabEditor
 
-# Crie um ambiente virtual
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # Linux/macOS
+# .venv\Scripts\activate   # Windows
 
-# Instale dependências base
 pip install -e .
+pip install -e ".[ai]"    # opcional, para stems
+pip install -e ".[dev]"   # opcional, para desenvolvimento
 
-# Dependências de IA (opcional, para stems)
-pip install -e ".[ai]"
-
-# Execute
-python3 src/presentation/main.py
+python src/presentation/main.py
 ```
 
 ---
@@ -153,45 +176,50 @@ python3 src/presentation/main.py
 
 ---
 
+## CI/CD
+
+O projeto usa **GitHub Actions** para integração contínua e releases automatizadas.
+
+### CI
+Em cada push/PR, o workflow executa lint (ruff) e testes (pytest) nos 3 sistemas operacionais:
+
+![CI](https://github.com/rubenslyra/AudioLabEditor/actions/workflows/ci.yml/badge.svg)
+
+### Release
+Ao criar uma tag `v*`, o workflow gera binários para Linux, Windows e macOS e publica automaticamente no GitHub Releases:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Os binários são gerados com PyInstaller em cada plataforma e anexados à release.
+
+---
+
 ## Build
 
-### Binário base (132 MB, sem IA)
+### Local
 
 ```bash
-./scripts/install.sh
+python -m PyInstaller scripts/AudioLabEditor.spec --log-level WARN
 ```
 
-O binário inclui apenas as funcionalidades core: captura, corte, editor de vídeo. Os recursos de IA (separação de stems) são baixados sob demanda pelo próprio aplicativo.
-
-### Perfil IA (desenvolvimento)
-
-```bash
-AUDIO_LAB_EDITOR_PROFILE=ai python3 -m PyInstaller scripts/AudioLabEditor.spec --log-level WARN
-```
+O binário inclui apenas funcionalidades core (~132 MB). IA é instalada sob demanda.
 
 ---
 
 ## Testes
 
 ```bash
-python3 -m pytest tests/ -v
+python -m pytest tests/ -v
 ```
-
----
-
-## Estrutura de Releases
-
-Cada release inclui:
-
-- `audiolab-editor` — binário Linux x86_64 (core)
-- `audiolab-editor-ai` — binário Linux x86_64 (com IA embarcada)
-- `Source code` — zip / tar.gz
 
 ---
 
 ## Licença
 
-MIT License
+MIT License — veja [LICENSE](LICENSE) para detalhes.
 
 ---
 

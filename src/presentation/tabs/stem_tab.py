@@ -79,7 +79,7 @@ class StemTab:
             self._show_missing()
 
     def _show_missing(self):
-        frame = self._push("Separador de Stems", "Dependencias de IA necessarias")
+        self._push("Separador de Stems", "Dependencias de IA necessarias")
 
         container = ctk.CTkFrame(self.root, corner_radius=16)
         container.pack(fill="x", padx=14, pady=(0, 20))
@@ -156,7 +156,10 @@ class StemTab:
 
         self._clear()
 
-        header = self._push("Separador de Stems", "Separe instrumentos e vocais de arquivos de audio usando IA (Demucs).")
+        self._push(
+            "Separador de Stems",
+            "Separe instrumentos e vocais de arquivos de audio usando IA (Demucs).",
+        )
         sep_frame = ctk.CTkFrame(self.root, fg_color="transparent")
         sep_frame.pack(fill="x", padx=14, pady=(0, 12))
         for i in range(3):
@@ -233,10 +236,14 @@ class StemTab:
         actions.pack(fill="x", padx=14, pady=(0, 14))
         self._stack.append(actions)
 
-        self.open_dir_btn = ctk.CTkButton(actions, text="Abrir pasta de destino", width=180, command=lambda: self._reveal_file())
+        self.open_dir_btn = ctk.CTkButton(
+            actions, text="Abrir pasta de destino", width=180, command=self._reveal_file
+        )
         self.open_dir_btn.pack(side="left", padx=(0, 8))
         self.open_dir_btn.pack_forget()
-        ctk.CTkButton(actions, text="Limpar logs", width=150, command=lambda: self.logs.delete("1.0", "end")).pack(side="left")
+        ctk.CTkButton(
+            actions, text="Limpar logs", width=150, command=lambda: self.logs.delete("1.0", "end")
+        ).pack(side="left")
 
         if self._path_config.get_dest_dir():
             self.dest_var.set(self._path_config.get_dest_dir())

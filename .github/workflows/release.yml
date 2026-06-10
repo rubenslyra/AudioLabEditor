@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            binary_name: AudioLabEditor
+            asset_name: audiolab-editor-linux-x86_64
+          - os: windows-latest
+            binary_name: AudioLabEditor.exe
+            asset_name: audiolab-editor-windows-x86_64.exe
+          - os: macos-latest
+            binary_name: AudioLabEditor
+            asset_name: audiolab-editor-macos-x86_64
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install system deps (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install system deps (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg
+
+      - name: Install system deps (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ffmpeg
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"
+          pip install pyinstaller
+
+      - name: Build with PyInstaller
+        run: |
+          python -m PyInstaller scripts/AudioLabEditor.spec --log-level WARN
+
+      - name: Verify binary exists (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          ls -lh dist/${{ matrix.binary_name }}
+          file dist/${{ matrix.binary_name }}
+
+      - name: Verify binary exists (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          dir dist\${{ matrix.binary_name }}
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: dist/${{ matrix.binary_name }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body_path: .github/RELEASE_TEMPLATE.md
+          files: |
+            artifacts/*/*
+          fail_on_unmatched_files: true
+          generate_release_notes: true

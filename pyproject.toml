@@ -5,13 +5,37 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "audiolab-editor"
 version = "0.1.0"
-description = "AudioLab Editor — merged application from MVP-AudioStemLab and rl-media-studio"
+description = "AudioLab Editor — Capture, edite e separe áudio e vídeo com IA"
 requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "Rubens Lyra", email = "rubens.lyra@outlook.com" },
+]
+keywords = ["audio", "video", "demucs", "stems", "editor", "youtube-dl", "ffmpeg"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Multimedia :: Sound/Audio :: Editors",
+  "Topic :: Multimedia :: Video :: Conversion",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
   "customtkinter==5.2.2",
   "pillow>=11",
   "yt-dlp>=2025.1",
 ]
+
+[project.urls]
+Homepage = "https://github.com/rubenslyra/AudioLabEditor"
+Repository = "https://github.com/rubenslyra/AudioLabEditor"
+Issues = "https://github.com/rubenslyra/AudioLabEditor/issues"
 
 [project.optional-dependencies]
 dev = [

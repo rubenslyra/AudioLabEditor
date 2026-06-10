@@ -5,7 +5,6 @@ import sys
 from dataclasses import dataclass, field
 from typing import Callable
 
-
 STEM_PACKAGES: list[dict[str, str]] = [
     {"import": "torch", "pip": "torch>=2.0"},
     {"import": "torchaudio", "pip": "torchaudio>=2.0"},
@@ -133,9 +132,8 @@ def install_packages(packages: list[dict[str, str]], progress_cb: ProgressSink |
         if returncode != 0:
             if progress_cb:
                 progress_cb(None, f"pip falhou com codigo {returncode}")
-                for l in lines[-3:]:
-                    progress_cb(None, f"  {l.strip()}")
-            failed_pips = [p["pip"] for p in packages]
+                for line in lines[-3:]:
+                    progress_cb(None, f"  {line.strip()}")
             return AiRuntimeStatus(available=False, missing=packages)
     except FileNotFoundError:
         if progress_cb:
