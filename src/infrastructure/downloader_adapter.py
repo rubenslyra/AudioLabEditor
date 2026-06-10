@@ -94,6 +94,7 @@ class YtDlpAdapter(DownloaderPort):
                 progress_cb(percent, f"Baixando... {percent:.1f}% | {speed_text} | ETA {eta_text}")
             elif status == "finished":
                 progress_cb(100.0, "Download concluido. Pos-processando...")
+
         return hook
 
     @staticmethod
@@ -109,8 +110,7 @@ class YtDlpAdapter(DownloaderPort):
         prepared = Path(prepared_filename)
         if audio_only:
             candidates = [
-                prepared.with_suffix(suffix)
-                for suffix in [".mp3", ".m4a", ".wav", ".flac", ".ogg", ".aac", ".opus"]
+                prepared.with_suffix(suffix) for suffix in [".mp3", ".m4a", ".wav", ".flac", ".ogg", ".aac", ".opus"]
             ]
             for candidate in candidates:
                 if candidate.exists():

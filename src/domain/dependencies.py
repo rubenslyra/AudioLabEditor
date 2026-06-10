@@ -8,3 +8,4 @@ class DependencyStatus:
     available: bool
     path: Path | None = None
     message: str = ""
+    required: bool = True

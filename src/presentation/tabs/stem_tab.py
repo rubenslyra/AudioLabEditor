@@ -39,7 +39,9 @@ class StemTab:
         self._load_saved_paths()
 
     def _build(self):
-        ctk.CTkLabel(self.root, text="Separador de Stems", font=ctk.CTkFont(size=24, weight="bold")).pack(anchor="w", padx=14, pady=(12, 4))
+        ctk.CTkLabel(self.root, text="Separador de Stems", font=ctk.CTkFont(size=24, weight="bold")).pack(
+            anchor="w", padx=14, pady=(12, 4)
+        )
         ctk.CTkLabel(
             self.root,
             text="Separe instrumentos e vocais de arquivos de audio usando IA (Demucs).",
@@ -52,21 +54,27 @@ class StemTab:
 
         row = 0
         ctk.CTkLabel(sep_frame, text="Arquivo de origem:", width=140).grid(row=row, column=0, sticky="w", pady=4)
-        self.source_entry = ctk.CTkEntry(sep_frame, textvariable=self.source_var, placeholder_text="Selecione o arquivo de audio/video...")
+        self.source_entry = ctk.CTkEntry(
+            sep_frame, textvariable=self.source_var, placeholder_text="Selecione o arquivo de audio/video..."
+        )
         self.source_entry.grid(row=row, column=1, sticky="ew", padx=(0, 8), pady=4)
         self.source_btn = ctk.CTkButton(sep_frame, text="Procurar", width=110, command=self._choose_source)
         self.source_btn.grid(row=row, column=2, pady=4)
 
         row += 1
         ctk.CTkLabel(sep_frame, text="Pasta de destino:", width=140).grid(row=row, column=0, sticky="w", pady=4)
-        self.dest_entry = ctk.CTkEntry(sep_frame, textvariable=self.dest_var, placeholder_text="Escolha onde salvar os stems...")
+        self.dest_entry = ctk.CTkEntry(
+            sep_frame, textvariable=self.dest_var, placeholder_text="Escolha onde salvar os stems..."
+        )
         self.dest_entry.grid(row=row, column=1, sticky="ew", padx=(0, 8), pady=4)
         self.dest_btn = ctk.CTkButton(sep_frame, text="Procurar", width=110, command=self._choose_dest)
         self.dest_btn.grid(row=row, column=2, pady=4)
 
         row += 1
         ctk.CTkLabel(sep_frame, text="Nome do projeto:", width=140).grid(row=row, column=0, sticky="w", pady=4)
-        self.project_entry = ctk.CTkEntry(sep_frame, textvariable=self.project_var, placeholder_text="Deixe em branco para usar 'ALE'")
+        self.project_entry = ctk.CTkEntry(
+            sep_frame, textvariable=self.project_var, placeholder_text="Deixe em branco para usar 'ALE'"
+        )
         self.project_entry.grid(row=row, column=1, sticky="ew", padx=(0, 8), pady=4)
 
         options_frame = ctk.CTkFrame(self.root, corner_radius=16)
@@ -76,13 +84,19 @@ class StemTab:
 
         ctk.CTkLabel(options_frame, text="Modo de separacao").grid(row=0, column=0, padx=(12, 8), pady=12, sticky="w")
         self.mode_menu = ctk.CTkOptionMenu(
-            options_frame, values=list(self.MODE_LABELS.keys()), variable=self.mode_var, width=280,
+            options_frame,
+            values=list(self.MODE_LABELS.keys()),
+            variable=self.mode_var,
+            width=280,
         )
         self.mode_menu.grid(row=0, column=1, padx=(0, 16), pady=12, sticky="w")
 
         ctk.CTkLabel(options_frame, text="Formato de saida").grid(row=0, column=2, padx=(0, 8), pady=12, sticky="w")
         self.format_menu = ctk.CTkOptionMenu(
-            options_frame, values=list(self.FORMAT_LABELS.keys()), variable=self.format_var, width=260,
+            options_frame,
+            values=list(self.FORMAT_LABELS.keys()),
+            variable=self.format_var,
+            width=260,
         )
         self.format_menu.grid(row=0, column=3, padx=(0, 12), pady=12, sticky="w")
 
@@ -101,16 +115,21 @@ class StemTab:
         self.actions = ctk.CTkFrame(self.root, fg_color="transparent")
         self.actions.pack(fill="x", padx=14, pady=(0, 14))
         self.open_dir_btn = ctk.CTkButton(
-            self.actions, text="Abrir pasta de destino", width=180,
+            self.actions,
+            text="Abrir pasta de destino",
+            width=180,
             command=lambda: self._reveal_file(),
         )
         self.open_dir_btn.pack(side="left", padx=(0, 8))
         self.open_dir_btn.pack_forget()
-        ctk.CTkButton(self.actions, text="Limpar logs", width=150, command=lambda: self.logs.delete("1.0", "end")).pack(side="left")
+        ctk.CTkButton(self.actions, text="Limpar logs", width=150, command=lambda: self.logs.delete("1.0", "end")).pack(
+            side="left"
+        )
 
     def _reveal_file(self):
         import subprocess
         import sys
+
         path = self._last_output_dir
         if not path:
             return
@@ -129,7 +148,10 @@ class StemTab:
     def _choose_source(self):
         folder = filedialog.askopenfilename(
             title="Selecionar arquivo de audio ou video",
-            filetypes=[("Audio/Video", "*.mp3 *.wav *.flac *.ogg *.m4a *.mp4 *.avi *.mkv *.mov *.webm"), ("Todos", "*.*")],
+            filetypes=[
+                ("Audio/Video", "*.mp3 *.wav *.flac *.ogg *.m4a *.mp4 *.avi *.mkv *.mov *.webm"),
+                ("Todos", "*.*"),
+            ],
         )
         if folder:
             self.source_var.set(folder)
@@ -190,6 +212,7 @@ class StemTab:
                 self.root.after(0, _error)
 
         import threading
+
         threading.Thread(target=task, daemon=True).start()
 
     def _show_open_dir_button(self):

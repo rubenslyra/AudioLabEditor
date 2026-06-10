@@ -1,16 +1,17 @@
+import importlib
 import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox
 
 import customtkinter as ctk
 from PIL import Image, ImageTk
+
+from application.bootstrap import validate_startup
 from application.capture_media_use_case import CaptureMediaUseCase
 from application.separate_audio_use_case import SeparateAudioUseCase
 from infrastructure.demucs_adapter import DemucsSubprocessAdapter
 from infrastructure.downloader_adapter import YtDlpAdapter
 from infrastructure.ffmpeg_adapter import FFmpegAdapter
-
-from application.bootstrap import validate_startup
 from presentation.splash import SplashScreen
 from presentation.tabs.capture_tab import CaptureTab
 from presentation.tabs.stem_tab import StemTab
@@ -22,6 +23,13 @@ def show_startup_error(message: str) -> None:
     root = tk.Tk()
     root.withdraw()
     messagebox.showerror("Dependencias ausentes", message)
+    root.destroy()
+
+
+def show_startup_warning(message: str) -> None:
+    root = tk.Tk()
+    root.withdraw()
+    messagebox.showwarning("Dependencias opcionais ausentes", message)
     root.destroy()
 
 
@@ -49,25 +57,35 @@ def build_window(app, splash=None):
     step(0.20, "Criando adaptadores...")
     downloader = YtDlpAdapter()
     ffmpeg = FFmpegAdapter()
-    demucs = DemucsSubprocessAdapter()
+    demucs_available = importlib.util.find_spec("demucs") is not None
+    demucs = DemucsSubprocessAdapter() if demucs_available else None
 
     capture_use_case = CaptureMediaUseCase(downloader=downloader, ffmpeg=ffmpeg)
-    separate_use_case = SeparateAudioUseCase(demucs=demucs)
+    separate_use_case = SeparateAudioUseCase(demucs=demucs) if demucs_available else None
 
     step(0.35, "Montando interface...")
 
-    tab_switcher = ctk.CTkSegmentedButton(app, values=["Captura", "Audio", "Stems", "Video"])
+    if separate_use_case is not None:
+        tab_values = ["Captura", "Audio", "Stems", "Video"]
+        tab_builders = {
+            "Captura": lambda parent: CaptureTab(parent, app, capture_use_case),
+            "Audio": lambda parent: TrimTab(parent, app),
+            "Stems": lambda parent: StemTab(parent, app, separate_use_case),
+            "Video": lambda parent: VideoEditorTab(parent, app),
+        }
+    else:
+        tab_values = ["Captura", "Audio", "Video"]
+        tab_builders = {
+            "Captura": lambda parent: CaptureTab(parent, app, capture_use_case),
+            "Audio": lambda parent: TrimTab(parent, app),
+            "Video": lambda parent: VideoEditorTab(parent, app),
+        }
+
+    tab_switcher = ctk.CTkSegmentedButton(app, values=tab_values)
     tab_switcher.pack(fill="x", padx=10, pady=(10, 0))
 
     tab_container = ctk.CTkFrame(app)
     tab_container.pack(fill="both", expand=True, padx=10, pady=(5, 10))
-
-    tab_builders = {
-        "Captura": lambda parent: CaptureTab(parent, app, capture_use_case),
-        "Audio": lambda parent: TrimTab(parent, app),
-        "Stems": lambda parent: StemTab(parent, app, separate_use_case),
-        "Video": lambda parent: VideoEditorTab(parent, app),
-    }
 
     tab_frames: dict[str, ctk.CTkFrame] = {}
 
@@ -100,11 +118,13 @@ def main() -> int:
 
     set_window_icon(app)
 
-    error_message = validate_startup()
+    error_message, warning_message = validate_startup()
     if error_message:
         app.destroy()
         show_startup_error(error_message)
         return 2
+    if warning_message:
+        show_startup_warning(warning_message)
 
     app.deiconify()
     app.geometry("1120x720")
@@ -118,7 +138,7 @@ def main() -> int:
 
     splash.close()
     try:
-        app.tk.call('wm', 'wmclass', app._w, 'AudioLabEditor', 'AudioLabEditor')
+        app.tk.call("wm", "wmclass", app._w, "AudioLabEditor", "AudioLabEditor")
     except Exception:
         pass
     app.update()

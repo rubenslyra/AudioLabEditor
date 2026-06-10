@@ -54,8 +54,10 @@ class DemucsSubprocessAdapter(DemucsPort):
         output_dir.mkdir(parents=True, exist_ok=True)
 
         demucs_args = [
-            "-n", cfg["model"],
-            "-o", str(output_dir),
+            "-n",
+            cfg["model"],
+            "-o",
+            str(output_dir),
         ]
         if cfg["two_stems"]:
             demucs_args.extend(["--two-stems", cfg["two_stems"]])

@@ -3,13 +3,13 @@ from pathlib import Path
 import customtkinter as ctk
 from PIL import Image
 
-
 LOGO_PATH = Path(__file__).resolve().parent / "assets" / "logo.png"
 
 
 class SplashScreen:
     def __init__(self, master: ctk.CTk):
         self._master = master
+        self._closed = False
         self.frame = ctk.CTkFrame(master, corner_radius=16, width=460, height=300)
         self.frame.place(relx=0.5, rely=0.5, anchor="center")
 
@@ -19,9 +19,7 @@ class SplashScreen:
 
         if LOGO_PATH.exists():
             pil_image = Image.open(LOGO_PATH)
-            ctk_image = ctk.CTkImage(
-                dark_image=pil_image, light_image=pil_image, size=(200, 80)
-            )
+            ctk_image = ctk.CTkImage(dark_image=pil_image, light_image=pil_image, size=(200, 80))
             ctk.CTkLabel(logo_frame, image=ctk_image, text="").pack(anchor="center")
         else:
             ctk.CTkLabel(
@@ -51,11 +49,29 @@ class SplashScreen:
         self._master.update()
 
     def set_progress(self, value: float, message: str = ""):
-        self.progress_bar.set(value)
-        if message:
-            self.status_label.configure(text=message)
-        self._master.update()
+        if self._closed or not self._widget_exists():
+            return
+        try:
+            self.progress_bar.set(value)
+            if message:
+                self.status_label.configure(text=message)
+            self._master.update()
+        except Exception:
+            pass
 
     def close(self):
-        self.frame.destroy()
-        self._master.update_idletasks()
+        if self._closed:
+            return
+        self._closed = True
+        try:
+            if self.frame.winfo_exists():
+                self.frame.destroy()
+            self._master.update_idletasks()
+        except Exception:
+            pass
+
+    def _widget_exists(self) -> bool:
+        try:
+            return bool(self.frame.winfo_exists()) and bool(self.progress_bar.winfo_exists())
+        except Exception:
+            return False

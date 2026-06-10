@@ -1,42 +1,119 @@
-# Plano de Integracao Codex — Infraestrutura Portavel
+# Plano de Integracao Codex — Distribuicao Profissional
 
-Data: 2026-06-09 | Responsavel: codex / tty0 | Branch: fix/self-contained-deps
+Data: 2026-06-10 | Responsavel: codex / tty0 | Branch: feat/path-config-ui
 
-## Objetivo
-Empacotar todas as dependencias (yt-dlp, ffmpeg, Demucs) dentro do executavel
-PyInstaller, com path resolution relocatable e startup doctor.
+## Decisao Tecnica
 
-## Dependencias Obrigatorias
-- **Base:** Python 3.11+, CustomTkinter, yt-dlp (embarcado), ffmpeg/ffprobe (binarios no bundle)
-- **Perfil ai:** Demucs, faster-whisper, edge-tts
-- **Perfil full:** Perfil ai + PaddleOCR/PaddlePaddle
+O AudioLabEditor nao deve depender de um executavel monolitico com todas as
+dependencias de IA, multimidia e modelos embarcados. PyInstaller/Nuitka entram
+apenas como etapa de build do aplicativo principal.
 
-## Path Resolution
-Modo congelado: buscar apenas em caminhos relativos ao executavel:
-diretorio do .exe, _internal/, _internal/bin/, bin/, tools/bin/, ffmpeg/bin/.
-Nao usar PATH, APPDATA, XDG_* ou ~ como fonte primaria.
+A distribuicao alvo passa a ser:
 
-## Startup Doctor
-Antes de abrir janela principal: verificar ffmpeg, ffprobe, yt-dlp, demucs
-(perfil ai). Se faltar, messagebox.showerror com lista de itens ausentes.
-Encerrar com codigo != 0 sem crash silencioso.
+```text
+app leve
+bootstrap/runtime doctor
+dependency manager
+assets versionados por plataforma
+instalador nativo
+```
 
-## PyInstaller Spec
-AudioLabEditor.spec deve:
-- Incluir ffmpeg/ffprobe via variavel explicita ou shutil.which
-- Coletar submodulos e metadados de yt_dlp
-- Coletar demucs, faster_whisper, edge_tts nos perfis ai/full
-- Coletar paddleocr e paddle no perfil full
-- console=False
+## Objetivo de Curto Prazo
 
-## Launchers
-- Linux: run-linux.sh com dirname, fallback PYTHONPATH=src
-- Windows: run-windows.bat com %~dp0, fallback dev
-- .desktop: sem terminal
+Disponibilizar uma versao de teste base para validar UI, captura, corte, editor
+e organizacao de saida. Stems/Demucs continuam no fluxo funcional do projeto,
+mas a distribuicao completa de IA sera tratada como runtime externo versionado.
 
-## Criterios de Aceite (Fase 0)
-- compileall ok, shell=False, <500 linhas/arquivo
-- Modo congelado nao usa PATH
-- Launchers funcionam por duplo clique
-- Startup doctor mostra erro amigavel sem crash
-- Commit com Conventional Commit
+## Estrutura de Runtime
+
+Os assets instalados/baixados ficam fora do binario principal:
+
+```text
+AudioLabEditor runtime
+├── runtime/
+│   └── tools/
+│       └── ffmpeg/
+│           └── bin/
+├── models/
+├── cache/
+└── plugins/
+```
+
+Diretorios por sistema:
+
+- Linux: `$XDG_DATA_HOME/audiolabeditor` ou `~/.local/share/audiolabeditor`
+- Windows: `%LOCALAPPDATA%/AudioLabEditor`
+- macOS: `~/Library/Application Support/AudioLabEditor`
+
+## Resolucao de Dependencias
+
+Ordem de busca para binarios:
+
+1. Ao lado do executavel/app bundle
+2. Bundle temporario do empacotador, quando existir
+3. Runtime gerenciado do usuario
+4. `PATH` do sistema somente em modo desenvolvimento
+
+Em modo congelado, o app nao deve depender do `PATH` global do sistema.
+
+## Assets Versionados
+
+Publicar no GitHub Releases ou storage equivalente:
+
+```text
+linux-x64/
+├── ffmpeg.tar.gz
+├── demucs-cpu.tar.gz
+└── models-v4.tar.gz
+
+windows-x64/
+├── ffmpeg.zip
+├── demucs-cpu.zip
+└── models-v4.zip
+
+macos-arm64/
+├── ffmpeg.tar.gz
+├── demucs-cpu.tar.gz
+└── models-v4.tar.gz
+```
+
+CUDA/GPU deve ser um pacote separado, nunca requisito do instalador base.
+
+## Roadmap
+
+### Fase A — Teste Base
+
+- [x] Binario Linux base em `dist/AudioLabEditor`
+- [x] Testes automatizados verdes
+- [x] Paths centralizados para data/cache/models/tools
+- [ ] Black box em sessao grafica normal
+
+### Fase B — Runtime Manager
+
+- [ ] Manifesto de runtime (`runtime-manifest.json`)
+- [ ] Verificacao de versao/hash dos assets
+- [ ] Download/extracao de ffmpeg no runtime gerenciado
+- [ ] Startup Doctor com acao reparavel: baixar dependencia ausente
+- [ ] Testes de resolucao sem internet usando fixtures locais
+
+### Fase C — IA Externa
+
+- [ ] Pacote Demucs CPU versionado por plataforma
+- [ ] Cache/modelos em `models/`
+- [ ] Politica de fallback quando IA nao estiver instalada
+- [ ] Download sob demanda ao abrir a aba Stems ou ao executar separacao
+
+### Fase D — Distribuicao Nativa
+
+- [ ] Linux: AppImage do app base + runtime fetcher
+- [ ] Windows: Inno Setup/NSIS + runtime fetcher
+- [ ] macOS: `.app`/DMG + assinatura/notarizacao quando aplicavel
+- [ ] CI/CD por plataforma
+
+## Criterios de Aceite
+
+- App base abre sem Demucs instalado
+- Dependencias ausentes mostram mensagem clara e reparavel
+- `ffmpeg` congelado e IA nao dependem de `PATH` global
+- Assets pesados nao entram no executavel principal
+- Testes automatizados cobrem paths e isolamento de configuracao local

@@ -1,0 +1,16 @@
+# =============================================================================
+# AudioLab Editor — Dependências
+# =============================================================================
+# Instalação:
+#   pip install -r requirements.txt
+#
+# Para instalar com suporte a IA (Demucs, Whisper, TTS):
+#   pip install -r requirements.txt[ai]
+#
+# Para instalação completa (adiciona PaddleOCR):
+#   pip install -r requirements.txt[full]
+# =============================================================================
+
+customtkinter==5.2.2
+pillow>=11
+yt-dlp>=2025.1

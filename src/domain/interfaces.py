@@ -15,8 +15,7 @@ class MediaInfo:
 
 
 class DownloaderPort:
-    def get_info(self, url: str) -> MediaInfo:
-        ...
+    def get_info(self, url: str) -> MediaInfo: ...
 
     def download(
         self,
@@ -28,8 +27,7 @@ class DownloaderPort:
         audio_bitrate: int = 192,
         video_format: str = "bv*+ba/b",
         progress_cb: ProgressCallback = None,
-    ) -> Path:
-        ...
+    ) -> Path: ...
 
 
 class FFmpegPort:
@@ -40,8 +38,7 @@ class FFmpegPort:
         *,
         quality_preset: str = "Alta",
         progress_cb: ProgressCallback = None,
-    ) -> Path:
-        ...
+    ) -> Path: ...
 
 
 @dataclass
@@ -62,5 +59,4 @@ class StemResult:
 
 
 class DemucsPort:
-    def separate(self, request: StemRequest, progress_cb: ProgressCallback = None) -> StemResult:
-        ...
+    def separate(self, request: StemRequest, progress_cb: ProgressCallback = None) -> StemResult: ...

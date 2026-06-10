@@ -3,7 +3,7 @@ from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
 
-from application.output_organizer import OutputOrganizer, PROJECT_NAME_FALLBACK
+from application.output_organizer import PROJECT_NAME_FALLBACK, OutputOrganizer
 from domain.entities import MediaType, OutputCategory, OutputRequest
 from infrastructure.ffmpeg_adapter import FFmpegAdapter
 from infrastructure.path_config import PathConfig
@@ -29,13 +29,19 @@ class TrimTab:
         self._build()
 
     def _build(self):
-        ctk.CTkLabel(self.root, text="Editor de Audio", font=ctk.CTkFont(size=24, weight="bold")).pack(anchor="w", padx=14, pady=(12, 4))
-        ctk.CTkLabel(self.root, text="Corte rapido com preview e exportacao em formato MP3.").pack(anchor="w", padx=14, pady=(0, 12))
+        ctk.CTkLabel(self.root, text="Editor de Audio", font=ctk.CTkFont(size=24, weight="bold")).pack(
+            anchor="w", padx=14, pady=(12, 4)
+        )
+        ctk.CTkLabel(self.root, text="Corte rapido com preview e exportacao em formato MP3.").pack(
+            anchor="w", padx=14, pady=(0, 12)
+        )
 
         self.io_frame = ctk.CTkFrame(self.root, fg_color="transparent")
         self.io_frame.pack(fill="x", padx=14, pady=(0, 8))
         ctk.CTkLabel(self.io_frame, text="Arquivo:").pack(side="left")
-        self.input_entry = ctk.CTkEntry(self.io_frame, textvariable=self.input_var, placeholder_text="Selecione um arquivo de audio...")
+        self.input_entry = ctk.CTkEntry(
+            self.io_frame, textvariable=self.input_var, placeholder_text="Selecione um arquivo de audio..."
+        )
         self.input_entry.pack(side="left", fill="x", expand=True, padx=(8, 8))
         self.choose_btn = ctk.CTkButton(self.io_frame, text="Procurar", width=100, command=self.choose_input)
         self.choose_btn.pack(side="left")
@@ -43,7 +49,9 @@ class TrimTab:
         self.io_frame2 = ctk.CTkFrame(self.root, fg_color="transparent")
         self.io_frame2.pack(fill="x", padx=14, pady=(0, 8))
         ctk.CTkLabel(self.io_frame2, text="Destino:").pack(side="left")
-        self.output_entry = ctk.CTkEntry(self.io_frame2, textvariable=self.output_dir_var, placeholder_text="Pasta de saida...")
+        self.output_entry = ctk.CTkEntry(
+            self.io_frame2, textvariable=self.output_dir_var, placeholder_text="Pasta de saida..."
+        )
         self.output_entry.pack(side="left", fill="x", expand=True, padx=(8, 8))
         self.output_btn = ctk.CTkButton(self.io_frame2, text="Pasta", width=100, command=self.choose_output)
         self.output_btn.pack(side="left")
@@ -51,7 +59,9 @@ class TrimTab:
         self.io_frame3 = ctk.CTkFrame(self.root, fg_color="transparent")
         self.io_frame3.pack(fill="x", padx=14, pady=(0, 8))
         ctk.CTkLabel(self.io_frame3, text="Projeto:").pack(side="left")
-        self.project_entry = ctk.CTkEntry(self.io_frame3, textvariable=self.project_var, placeholder_text=f"Em branco usa '{PROJECT_NAME_FALLBACK}'")
+        self.project_entry = ctk.CTkEntry(
+            self.io_frame3, textvariable=self.project_var, placeholder_text=f"Em branco usa '{PROJECT_NAME_FALLBACK}'"
+        )
         self.project_entry.pack(side="left", fill="x", expand=True, padx=(8, 0))
 
         self.selection_frame = ctk.CTkFrame(self.root, fg_color="transparent")
@@ -77,16 +87,21 @@ class TrimTab:
         self.actions = ctk.CTkFrame(self.root, fg_color="transparent")
         self.actions.pack(fill="x", padx=14, pady=(0, 14))
         self.open_dir_btn = ctk.CTkButton(
-            self.actions, text="Abrir pasta", width=140,
+            self.actions,
+            text="Abrir pasta",
+            width=140,
             command=self._reveal_file,
         )
         self.open_dir_btn.pack(side="left")
         self.open_dir_btn.pack_forget()
-        ctk.CTkButton(self.actions, text="Limpar logs", width=150, command=lambda: self.logs.delete("1.0", "end")).pack(side="left", padx=(8, 0))
+        ctk.CTkButton(self.actions, text="Limpar logs", width=150, command=lambda: self.logs.delete("1.0", "end")).pack(
+            side="left", padx=(8, 0)
+        )
 
     def _reveal_file(self):
         import subprocess
         import sys
+
         path = self._last_output_path
         if not path:
             return
@@ -141,7 +156,9 @@ class TrimTab:
             extension="mp3",
         )
         output_path = self._output_organizer.build_output_path(
-            request, dest_dir=output_dir, project_name=project_name,
+            request,
+            dest_dir=output_dir,
+            project_name=project_name,
         )
 
         self.progress.set(0)
@@ -149,15 +166,23 @@ class TrimTab:
 
         import subprocess
         import sys
+
         try:
             cmd = [
-                sys.executable, "-m", "ffmpeg",
+                sys.executable,
+                "-m",
+                "ffmpeg",
                 "-y",
-                "-i", str(Path(input_path).resolve()),
-                "-ss", str(start),
-                "-to", str(end),
-                "-c:a", "libmp3lame",
-                "-q:a", "2",
+                "-i",
+                str(Path(input_path).resolve()),
+                "-ss",
+                str(start),
+                "-to",
+                str(end),
+                "-c:a",
+                "libmp3lame",
+                "-q:a",
+                "2",
                 str(output_path),
             ]
             proc = subprocess.Popen(

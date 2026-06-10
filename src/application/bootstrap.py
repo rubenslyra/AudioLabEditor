@@ -1,7 +1,7 @@
 import importlib
 import os
 
-from infrastructure.startup_doctor import startup_error_message
+from infrastructure.startup_doctor import startup_error_message, startup_warning_message
 
 
 def _detect_profile() -> str:
@@ -14,6 +14,6 @@ def _detect_profile() -> str:
     return "base"
 
 
-def validate_startup() -> str:
+def validate_startup() -> tuple[str, str]:
     profile = _detect_profile()
-    return startup_error_message(profile)
+    return startup_error_message(profile), startup_warning_message(profile)

@@ -1,14 +1,18 @@
-
 import pytest
 
 from src.application.output_organizer import OutputOrganizer
 from src.domain.entities import MediaType, OutputCategory, OutputRequest
 from src.infrastructure.path_config import PathConfig
+from src.infrastructure.settings_store import SettingsStore
+
+
+def make_path_config(tmp_path):
+    return PathConfig(SettingsStore(tmp_path / "settings.json"))
 
 
 class TestOutputOrganizer:
     def test_build_output_path_with_project(self, tmp_path):
-        config = PathConfig()
+        config = make_path_config(tmp_path)
         organizer = OutputOrganizer(config)
 
         request = OutputRequest(
@@ -25,7 +29,7 @@ class TestOutputOrganizer:
         assert path.exists() is False
 
     def test_build_output_path_fallback_project(self, tmp_path):
-        config = PathConfig()
+        config = make_path_config(tmp_path)
         organizer = OutputOrganizer(config)
 
         request = OutputRequest(
@@ -41,7 +45,7 @@ class TestOutputOrganizer:
         assert path.name == "video-captured-20260609_143022.mp4"
 
     def test_build_output_path_creates_dir(self, tmp_path):
-        config = PathConfig()
+        config = make_path_config(tmp_path)
         organizer = OutputOrganizer(config)
 
         request = OutputRequest(
@@ -56,8 +60,8 @@ class TestOutputOrganizer:
         assert path.parent.is_dir()
         assert path.name == "stem-stem-vocals-20260609_150000.wav"
 
-    def test_build_output_path_raises_without_dest(self):
-        config = PathConfig()
+    def test_build_output_path_raises_without_dest(self, tmp_path):
+        config = make_path_config(tmp_path)
         organizer = OutputOrganizer(config)
 
         request = OutputRequest(
@@ -71,7 +75,7 @@ class TestOutputOrganizer:
             organizer.build_output_path(request)
 
     def test_build_output_dir(self, tmp_path):
-        config = PathConfig()
+        config = make_path_config(tmp_path)
         organizer = OutputOrganizer(config)
 
         directory = organizer.build_output_dir(
@@ -85,7 +89,7 @@ class TestOutputOrganizer:
         assert directory.is_dir()
 
     def test_build_stem_output_dir(self, tmp_path):
-        config = PathConfig()
+        config = make_path_config(tmp_path)
         organizer = OutputOrganizer(config)
 
         directory = organizer.build_stem_output_dir(
@@ -100,7 +104,7 @@ class TestOutputOrganizer:
         assert directory.parent.name == "ProjetoX"
 
     def test_build_stem_output_dir_no_project(self, tmp_path):
-        config = PathConfig()
+        config = make_path_config(tmp_path)
         organizer = OutputOrganizer(config)
 
         directory = organizer.build_stem_output_dir(
@@ -112,15 +116,15 @@ class TestOutputOrganizer:
         assert directory.name == "audio-stem-full4-20260609_150000"
         assert directory.parent.name == "ALE"
 
-    def test_build_stem_output_dir_raises_without_dest(self):
-        config = PathConfig()
+    def test_build_stem_output_dir_raises_without_dest(self, tmp_path):
+        config = make_path_config(tmp_path)
         organizer = OutputOrganizer(config)
 
         with pytest.raises(RuntimeError, match="Pasta de destino nao configurada"):
             organizer.build_stem_output_dir("vocals")
 
     def test_get_or_create_project_dir(self, tmp_path):
-        config = PathConfig()
+        config = make_path_config(tmp_path)
         organizer = OutputOrganizer(config)
 
         directory = organizer.get_or_create_project_dir(dest_dir=str(tmp_path), project_name="NovoProjeto")
@@ -129,7 +133,7 @@ class TestOutputOrganizer:
         assert directory.is_dir()
 
     def test_get_or_create_project_dir_uses_fallback(self, tmp_path):
-        config = PathConfig()
+        config = make_path_config(tmp_path)
         organizer = OutputOrganizer(config)
 
         directory = organizer.get_or_create_project_dir(dest_dir=str(tmp_path))
@@ -137,8 +141,8 @@ class TestOutputOrganizer:
         assert directory.name == "ALE"
         assert directory.is_dir()
 
-    def test_get_or_create_project_dir_raises_without_dest(self):
-        config = PathConfig()
+    def test_get_or_create_project_dir_raises_without_dest(self, tmp_path):
+        config = make_path_config(tmp_path)
         organizer = OutputOrganizer(config)
 
         with pytest.raises(RuntimeError, match="Pasta de destino nao configurada"):

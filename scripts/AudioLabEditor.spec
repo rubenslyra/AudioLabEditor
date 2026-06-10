@@ -40,6 +40,14 @@ def safe_copy_metadata(distribution_name):
         return []
 
 
+def collect_python_package(package_name, distribution_name=None, include_dynamic_libs=False, include_submodules=True):
+    collected_datas = safe_collect_data_files(package_name)
+    collected_binaries = safe_collect_dynamic_libs(package_name) if include_dynamic_libs else []
+    collected_hiddenimports = safe_collect_submodules(package_name) if include_submodules else []
+    collected_metadata = safe_copy_metadata(distribution_name or package_name)
+    return collected_datas + collected_metadata, collected_binaries, collected_hiddenimports
+
+
 def collect_tool_binary(name, env_name):
     explicit = os.environ.get(env_name)
     candidate = Path(explicit) if explicit else None
@@ -100,19 +108,44 @@ for distribution_name in ["customtkinter", "yt-dlp", "pillow"]:
     datas += safe_copy_metadata(distribution_name)
 
 if profile in {"ai", "full"}:
-    hiddenimports += safe_collect_submodules("demucs")
-    hiddenimports += safe_collect_submodules("faster_whisper")
-    hiddenimports += safe_collect_submodules("edge_tts")
-    binaries += safe_collect_dynamic_libs("ctranslate2")
-    for distribution_name in ["demucs", "faster-whisper", "edge-tts", "ctranslate2"]:
-        datas += safe_copy_metadata(distribution_name)
+    ai_packages = [
+        ("demucs", "demucs", False, True),
+        ("dora", "dora-search", False, True),
+        ("julius", "julius", False, True),
+        ("lameenc", "lameenc", True, True),
+        ("openunmix", "openunmix", False, True),
+        ("torch", "torch", True, False),
+        ("torchaudio", "torchaudio", True, False),
+        ("faster_whisper", "faster-whisper", False, True),
+        ("edge_tts", "edge-tts", False, True),
+        ("ctranslate2", "ctranslate2", True, False),
+    ]
+    for package_name, distribution_name, include_dynamic_libs, include_submodules in ai_packages:
+        package_datas, package_binaries, package_hiddenimports = collect_python_package(
+            package_name,
+            distribution_name,
+            include_dynamic_libs=include_dynamic_libs,
+            include_submodules=include_submodules,
+        )
+        datas += package_datas
+        binaries += package_binaries
+        hiddenimports += package_hiddenimports
 
 if profile == "full":
-    hiddenimports += safe_collect_submodules("paddleocr")
-    hiddenimports += safe_collect_submodules("paddle")
-    binaries += safe_collect_dynamic_libs("paddle")
-    for distribution_name in ["paddleocr", "paddlepaddle"]:
-        datas += safe_copy_metadata(distribution_name)
+    full_packages = [
+        ("paddleocr", "paddleocr", False, True),
+        ("paddle", "paddlepaddle", True, False),
+    ]
+    for package_name, distribution_name, include_dynamic_libs, include_submodules in full_packages:
+        package_datas, package_binaries, package_hiddenimports = collect_python_package(
+            package_name,
+            distribution_name,
+            include_dynamic_libs=include_dynamic_libs,
+            include_submodules=include_submodules,
+        )
+        datas += package_datas
+        binaries += package_binaries
+        hiddenimports += package_hiddenimports
 
 excludes = ["pytest", "numpy.tests", "PIL.tests"]
 if profile == "base":

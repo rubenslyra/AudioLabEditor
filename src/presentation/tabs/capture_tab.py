@@ -10,7 +10,7 @@ from application.capture_media_use_case import (
     CaptureMediaRequest,
     CaptureMediaUseCase,
 )
-from application.output_organizer import OutputOrganizer, PROJECT_NAME_FALLBACK
+from application.output_organizer import PROJECT_NAME_FALLBACK, OutputOrganizer
 from infrastructure.path_config import PathConfig
 from presentation.widgets import LogBox
 
@@ -43,7 +43,9 @@ class CaptureTab:
         self._build()
 
     def _build(self):
-        ctk.CTkLabel(self.root, text="Captura de Midia", font=ctk.CTkFont(size=24, weight="bold")).pack(anchor="w", padx=14, pady=(12, 4))
+        ctk.CTkLabel(self.root, text="Captura de Midia", font=ctk.CTkFont(size=24, weight="bold")).pack(
+            anchor="w", padx=14, pady=(12, 4)
+        )
         self.note = ctk.CTkLabel(
             self.root,
             text="Baixe videos, preserve o original, comprima com qualidade ou extraia audio em um fluxo unico.",
@@ -52,7 +54,9 @@ class CaptureTab:
 
         self.url_frame = ctk.CTkFrame(self.root, fg_color="transparent")
         self.url_frame.pack(fill="x", padx=14, pady=(0, 8))
-        self.url_entry = ctk.CTkEntry(self.url_frame, textvariable=self.url_var, placeholder_text="Cole a URL do video aqui")
+        self.url_entry = ctk.CTkEntry(
+            self.url_frame, textvariable=self.url_var, placeholder_text="Cole a URL do video aqui"
+        )
         self.url_entry.pack(side="left", fill="x", expand=True, padx=(0, 8))
         self.analyze_btn = ctk.CTkButton(self.url_frame, text="Analisar", width=120, command=self.analyze)
         self.analyze_btn.pack(side="left", padx=(0, 8))
@@ -71,7 +75,9 @@ class CaptureTab:
         self.proj_frame = ctk.CTkFrame(self.root, fg_color="transparent")
         self.proj_frame.pack(fill="x", padx=14, pady=(0, 8))
         ctk.CTkLabel(self.proj_frame, text="Nome do projeto:", width=110).pack(side="left")
-        self.proj_entry = ctk.CTkEntry(self.proj_frame, textvariable=self.project_var, placeholder_text=f"Em branco usa '{PROJECT_NAME_FALLBACK}'")
+        self.proj_entry = ctk.CTkEntry(
+            self.proj_frame, textvariable=self.project_var, placeholder_text=f"Em branco usa '{PROJECT_NAME_FALLBACK}'"
+        )
         self.proj_entry.pack(side="left", fill="x", expand=True, padx=(8, 0))
 
         self.options_frame = ctk.CTkFrame(self.root, corner_radius=16)
@@ -99,7 +105,9 @@ class CaptureTab:
         self.audio_frame = ctk.CTkFrame(self.root, fg_color="transparent")
         self.audio_frame.pack(fill="x", padx=14, pady=(0, 12))
         ctk.CTkLabel(self.audio_frame, text="Formato de audio", width=130).pack(side="left")
-        self.audio_format_menu = ctk.CTkOptionMenu(self.audio_frame, values=self.AUDIO_FORMATS, variable=self.audio_format_var, width=120)
+        self.audio_format_menu = ctk.CTkOptionMenu(
+            self.audio_frame, values=self.AUDIO_FORMATS, variable=self.audio_format_var, width=120
+        )
         self.audio_format_menu.pack(side="left", padx=(0, 12))
         ctk.CTkLabel(self.audio_frame, text="Bitrate").pack(side="left", padx=(0, 8))
         self.audio_bitrate_entry = ctk.CTkEntry(self.audio_frame, textvariable=self.audio_bitrate_var, width=90)
@@ -128,13 +136,16 @@ class CaptureTab:
         )
         self.open_dir_btn.pack(side="left", padx=(0, 8))
         self.open_dir_btn.pack_forget()
-        self.clear_btn = ctk.CTkButton(self.actions, text="Limpar logs", width=150, command=lambda: self.logs.delete("1.0", "end"))
+        self.clear_btn = ctk.CTkButton(
+            self.actions, text="Limpar logs", width=150, command=lambda: self.logs.delete("1.0", "end")
+        )
         self.clear_btn.pack(side="left")
         self._on_mode_changed()
 
     def _reveal_file(self):
         import subprocess
         import sys
+
         path = self._last_output_path
         if not path:
             return
@@ -185,21 +196,25 @@ class CaptureTab:
                     self.info_box.delete("1.0", "end")
                     self.info_box.insert(
                         "end",
-                        "\n".join([
-                            f"Titulo: {title}",
-                            f"Duracao: {duration}",
-                            f"Canal/Uploader: {uploader}",
-                            f"Link: {webpage}",
-                        ]),
+                        "\n".join(
+                            [
+                                f"Titulo: {title}",
+                                f"Duracao: {duration}",
+                                f"Canal/Uploader: {uploader}",
+                                f"Link: {webpage}",
+                            ]
+                        ),
                     )
                     self.logs.append("Metadados carregados. Escolha o modo e inicie a captura.")
                     self.status_label.configure(text="URL analisada.")
+
                 self.root.after(0, _show)
             except Exception as exc:
                 error = str(exc)
                 self.root.after(0, lambda: messagebox.showerror("Erro ao analisar", error))
 
         import threading
+
         threading.Thread(target=task, daemon=True).start()
 
     def start_capture(self):
@@ -221,7 +236,8 @@ class CaptureTab:
         self._path_config.set_project_name(project_name)
 
         project_dir = self._output_organizer.get_or_create_project_dir(
-            dest_dir=output_dir, project_name=project_name,
+            dest_dir=output_dir,
+            project_name=project_name,
         )
 
         request = CaptureMediaRequest(
@@ -247,6 +263,7 @@ class CaptureTab:
                 self.root.after(0, lambda: messagebox.showerror("Erro na captura", error))
 
         import threading
+
         threading.Thread(target=task, daemon=True).start()
 
     def _show_open_dir_button(self):
