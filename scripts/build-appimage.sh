@@ -8,9 +8,7 @@ BUILD="$ROOT/dist"
 APPDIR="$BUILD/$APP.AppDir"
 PROFILE="${AUDIO_LAB_EDITOR_PROFILE:-base}"
 
-echo "==> Profile: $PROFILE"
-
-echo "==> PyInstaller build..."
+echo "==> PyInstaller build (profile=$PROFILE)..."
 cd "$ROOT"
 rm -rf dist build
 AUDIO_LAB_EDITOR_PROFILE="$PROFILE" python3 -m PyInstaller "$HERE/AudioLabEditor.spec" --log-level WARN
