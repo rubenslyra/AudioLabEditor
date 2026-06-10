@@ -101,8 +101,9 @@ jobs:
 
           echo "Creating release for tag: $TAG"
 
-          # Rename each binary to its asset name (parent directory name)
-          # artifacts/<asset_name>/<binary_file> -> artifacts/<asset_name>
+          # Flatten artifacts: copy each binary to a flat dir with its asset name
+          # artifacts/<asset_name>/<binary_file> -> artifacts-out/<asset_name>
+          mkdir -p artifacts-out
           release_files=()
           for dir in artifacts/*/; do
             asset="$(basename "$dir")"
@@ -111,10 +112,9 @@ jobs:
               echo "WARNING: No binary found in $dir, skipping"
               continue
             fi
-            mv "$binary" "artifacts/$asset"
-            rmdir "$dir" 2>/dev/null || true
-            release_files+=("artifacts/$asset")
-            echo "  Prepared: artifacts/$asset"
+            cp "$binary" "artifacts-out/$asset"
+            release_files+=("artifacts-out/$asset")
+            echo "  Prepared: artifacts-out/$asset"
           done
 
           if [ ${#release_files[@]} -eq 0 ]; then
