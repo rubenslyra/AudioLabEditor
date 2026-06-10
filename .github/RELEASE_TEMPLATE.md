@@ -1,4 +1,4 @@
-## AudioLab Editor ${{ github.ref_name }}
+## AudioLab Editor
 
 Capture, edite e separe áudio e vídeo com IA.
 
