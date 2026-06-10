@@ -57,13 +57,17 @@ Não é necessário saber programar. A interface é gráfica e os parâmetros ma
 ## 3. O que ele faz
 
 | Funcionalidade | Descrição |
-|---|---|
+|---|---|---|
 | **Captura de mídia** | Baixa vídeo ou áudio de URLs (YouTube, Vimeo, etc.) com opções de compressão e extração de áudio |
 | **Corte de áudio** | Apara arquivos de áudio definindo tempo inicial e final, exporta em MP3 |
 | **Separação de stems** | Usa IA (Demucs) para separar vocais, baixo, bateria e outros instrumentos |
 | **Edição de vídeo** | Corta vídeos com presets de qualidade (Alta/Balanceada/Compacta) |
 | **Transcrição** | (*em integração*) Converte áudio em texto usando whisper |
 | **Voz sintética** | (*em integração*) Gera áudio a partir de texto usando edge-tts |
+
+<p align="center">
+  <img src="docs/screenshots/main_window.png" alt="AudioLab Editor - Tela principal" width="90%"/>
+</p>
 
 ---
 
@@ -562,8 +566,10 @@ O aplicativo **não** foi feito para:
 - ✅ Interface em CustomTkinter (moderna, tema claro/escuro)
 - ✅ Organização automática de arquivos por projeto
 - ✅ Detecção de dependências na inicialização
-- ✅ Build single-file (via PyInstaller) e AppImage Linux
-- ✅ Testes de unidade automatizados
+- ✅ Build single-file (PyInstaller) para Linux, Windows e macOS
+- ✅ CI/CD com GitHub Actions (lint + testes nos 3 SOs)
+- ✅ Scripts de instalação para Linux, Windows e macOS
+- ✅ Testes de unidade automatizados (32 testes, 100% passando)
 
 ### Em desenvolvimento
 
@@ -602,20 +608,38 @@ pip install "audiolab-editor[ai]"
 pip install "audiolab-editor[full]"
 ```
 
-### Via AppImage (Linux, recomendado)
+### Via executável PyInstaller (Linux/macOS)
 
 ```bash
-# Baixar o AppImage da página de releases
-chmod +x AudioLabEditor-x86_64.AppImage
-./AudioLabEditor-x86_64.AppImage
+# Baixar o binário da página de releases
+chmod +x audiolab-editor-linux-x86_64
+./audiolab-editor-linux-x86_64
 ```
 
-### Via executável PyInstaller
+### Via executável (Windows)
+
+```powershell
+.\audiolab-editor-windows-x86_64.exe
+```
+
+### Instalação com integração ao sistema
 
 ```bash
-# A partir do código-fonte
+# Linux — integração ao menu de aplicativos
+./scripts/install.sh
+
+# macOS — bundle .app + atalho no PATH
+./scripts/install-macos.sh
+
+# Windows — atalho no Menu Iniciar + PATH
+.\scripts\install.ps1
+```
+
+### A partir do código-fonte
+
+```bash
 pip install -e ".[dev]"
-python scripts/build-appimage.sh
+python -m PyInstaller scripts/AudioLabEditor.spec --log-level WARN
 # Ou execute diretamente:
 python -m src.presentation.main
 ```

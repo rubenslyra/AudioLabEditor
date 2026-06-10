@@ -26,6 +26,40 @@ Funciona em **Linux**, **Windows** e **macOS**.
 
 ---
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/main_window.png" alt="Tela principal" width="80%"/>
+  <br/>
+  <em>Tela principal — Captura de mídia</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/tab_capture.png" alt="Aba Captura" width="80%"/>
+  <br/>
+  <em>Aba Captura — download de mídia por URL</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/tab_trim.png" alt="Aba Corte de Áudio" width="80%"/>
+  <br/>
+  <em>Aba Corte de Áudio — aparar e exportar áudio</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/tab_video.png" alt="Aba Editor de Vídeo" width="80%"/>
+  <br/>
+  <em>Aba Editor de Vídeo — cortar e renderizar vídeo</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/tab_stems.png" alt="Aba Separador de Stems" width="80%"/>
+  <br/>
+  <em>Aba Separador de Stems — isolar vocais e instrumentos com IA</em>
+</p>
+
+---
+
 ## Funcionalidades
 
 ### Captura de Mídia
@@ -115,6 +149,13 @@ Instalação com integração ao menu de aplicativos:
 .\audiolab-editor-windows-x86_64.exe
 ```
 
+Instalação com atalho no Menu Iniciar e PATH:
+
+```powershell
+.\scripts\install.ps1                    # instala em %LOCALAPPDATA%
+.\scripts\install.ps1 -System            # instala em %ProgramFiles%
+```
+
 ### macOS
 
 ```bash
@@ -123,7 +164,14 @@ chmod +x audiolab-editor-macos-x86_64
 ./audiolab-editor-macos-x86_64
 ```
 
-> **Aviso**: No macOS, pode ser necessário autorizar o binário em **Preferências do Sistema > Segurança e Privacidade**.
+Instalação como `.app` bundle (Finder/Launchpad) + atalho no PATH:
+
+```bash
+./scripts/install-macos.sh                    # instala em ~/Applications
+./scripts/install-macos.sh --system           # instala em /Applications
+```
+
+> **Aviso**: No macOS, pode ser necessário autorizar o binário em **Preferências do Sistema > Segurança e Privacidade**. O script `install-macos.sh` gera um bundle `.app` com ícone e Info.plist.
 
 ### Desenvolvimento
 

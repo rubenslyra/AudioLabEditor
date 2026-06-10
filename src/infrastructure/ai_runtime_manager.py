@@ -44,6 +44,8 @@ def _check_module(name: str) -> bool:
 
 def _find_system_python() -> str | None:
     candidates = ["python3", "python"]
+    if sys.platform.startswith("win"):
+        candidates = ["python", "python3", "py"]
     for name in candidates:
         resolved = shutil.which(name)
         if resolved:
@@ -79,7 +81,7 @@ def _check_runtime(packages: list[dict[str, str]]) -> AiRuntimeStatus:
     return AiRuntimeStatus(
         available=len(missing) == 0,
         missing=missing,
-        python_path="python3" if getattr(sys, "frozen", False) else sys.executable,
+        python_path=_find_system_python() or "python" if getattr(sys, "frozen", False) else sys.executable,
     )
 
 
@@ -96,7 +98,7 @@ def check_tts_runtime() -> AiRuntimeStatus:
 
 
 def _pip_install_command(packages: list[str]) -> list[str]:
-    python = "python3" if getattr(sys, "frozen", False) else sys.executable
+    python = _find_system_python() or sys.executable if getattr(sys, "frozen", False) else sys.executable
     return [python, "-m", "pip", "install", "--upgrade"] + packages
 
 
@@ -137,7 +139,7 @@ def install_packages(packages: list[dict[str, str]], progress_cb: ProgressSink |
             return AiRuntimeStatus(available=False, missing=packages)
     except FileNotFoundError:
         if progress_cb:
-            progress_cb(None, "python3 ou pip nao encontrado no PATH do sistema.")
+            progress_cb(None, "python ou pip nao encontrado no PATH do sistema.")
         return AiRuntimeStatus(available=False, missing=packages)
     except Exception as exc:
         if progress_cb:

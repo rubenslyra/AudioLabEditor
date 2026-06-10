@@ -237,7 +237,7 @@ class StemTab:
         self._stack.append(actions)
 
         self.open_dir_btn = ctk.CTkButton(
-            actions, text="Abrir pasta de destino", width=180, command=self._reveal_file
+            actions, text="Abrir pasta de destino", width=180, command=self._reveal_output_dir
         )
         self.open_dir_btn.pack(side="left", padx=(0, 8))
         self.open_dir_btn.pack_forget()
@@ -248,7 +248,7 @@ class StemTab:
         if self._path_config.get_dest_dir():
             self.dest_var.set(self._path_config.get_dest_dir())
 
-    def _reveal_file(self):
+    def _reveal_output_dir(self):
         import subprocess
         import sys
         path = self._last_output_dir

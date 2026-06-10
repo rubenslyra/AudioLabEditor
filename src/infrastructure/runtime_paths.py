@@ -16,7 +16,7 @@ def user_data_dir() -> Path:
     if sys.platform == "darwin":
         return Path.home() / "Library" / "Application Support" / APP_NAME
     base = Path(environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share")
-    return base / "audiolabeditor"
+    return base / APP_NAME.lower()
 
 
 def app_data_dir() -> Path:
@@ -30,7 +30,7 @@ def app_cache_dir() -> Path:
     if sys.platform == "darwin":
         return Path.home() / "Library" / "Caches" / APP_NAME
     base = Path(environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
-    return base / "audiolabeditor"
+    return base / APP_NAME.lower()
 
 
 def runtime_dir() -> Path:

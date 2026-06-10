@@ -86,6 +86,10 @@ jobs:
         with:
           path: artifacts
 
+      - name: Inspect artifacts
+        run: |
+          find artifacts -type f -ls
+
       - name: Create Release with gh CLI
         env:
           GH_TOKEN: ${{ github.token }}
@@ -97,10 +101,21 @@ jobs:
 
           echo "Creating release for tag: $TAG"
 
+          # Collect all artifact files (recursive, any depth)
+          mapfile -t files < <(find artifacts -type f)
+
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "ERROR: No artifact files found!"
+            exit 1
+          fi
+
+          echo "Uploading ${#files[@]} artifact(s):"
+          printf '  %s\n' "${files[@]}"
+
           gh release create "$TAG" \
             --title "$TAG" \
             --notes-file "$BODY" \
             --generate-notes \
-            artifacts/*/*
+            "${files[@]}"
 
           echo "Release created successfully!"

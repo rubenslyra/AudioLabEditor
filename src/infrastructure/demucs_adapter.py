@@ -1,6 +1,7 @@
 import importlib.util
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -99,7 +100,14 @@ class DemucsSubprocessAdapter(DemucsPort):
 
     def _resolve_python(self) -> str:
         if getattr(sys, "frozen", False):
-            return "python3"
+            candidates = ["python3", "python"]
+            if sys.platform.startswith("win"):
+                candidates = ["python", "python3", "py"]
+            for name in candidates:
+                resolved = shutil.which(name)
+                if resolved:
+                    return resolved
+            return "python" if sys.platform.startswith("win") else "python3"
         return sys.executable
 
     def _run_subprocess(self, demucs_args: list[str], env: dict[str, str], progress_cb: ProgressCallback):

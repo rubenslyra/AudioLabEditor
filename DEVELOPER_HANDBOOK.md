@@ -9,10 +9,15 @@ Para continuar o desenvolvimento manualmente sem os agentes.
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install customtkinter Pillow yt-dlp demucs torch rich
-# Ou instalar perfil completo:
-pip install -r rl-media-studio-v1_6/requirements.txt
-pip install -r MVP-AudioStemLab/requirements.txt
+
+# Instalar core + dev
+pip install -e ".[dev]"
+
+# Opcional: IA (Demucs, torch, etc.)
+pip install -e ".[ai]"
+
+# Build com PyInstaller
+pip install pyinstaller
 ```
 
 **Dependências externas:** ffmpeg, ffprobe (no PATH ou junto ao executável)
@@ -22,42 +27,46 @@ pip install -r MVP-AudioStemLab/requirements.txt
 ## 2. Onde está o quê
 
 ```
-AudioLabEditor/                    → projeto alvo (será criado pelos agentes)
+AudioLabEditor/
 ├── src/
 │   ├── presentation/              → GUI (CustomTkinter)
+│   │   ├── main.py                → entrypoint
+│   │   ├── tabs/                  → abas da interface
+│   │   │   ├── capture_tab.py     → captura de midia
+│   │   │   ├── stem_tab.py        → separador de stems
+│   │   │   ├── trim_tab.py        → editor de audio
+│   │   │   └── video_editor_tab.py→ editor de video
+│   │   └── assets/                → logo, icones
 │   ├── application/               → use cases
-│   ├── domain/                    → entidades
-│   └── infrastructure/            → ffmpeg, storage, demucs
-
-rl-media-studio-v1_6/              → base GUI existente (CustomTkinter)
-├── src/rlmedia/
-│   ├── ui/tabs/                   → abas da interface
-│   │   ├── capture_tab.py         → captura de midia
-│   │   ├── stem_tab.py            → separador de stems (JA CRIADO)
-│   │   ├── trim_tab.py            → editor de audio
-│   │   ├── video_editor_tab.py    → editor de video (~1968 linhas)
-│   │   └── credits_tab.py         → creditos
-│   ├── core/media/                → servicos de midia
-│   │   ├── stem_service.py        → separacao Demucs (JA CRIADO)
-│   │   ├── capture_service.py     → captura por URL
-│   │   └── ffmpeg_service.py      → comandos ffmpeg
-│   ├── core/storage/              → persistencia
-│   │   ├── settings_store.py      → JSON settings (thread-safe)
-│   │   ├── path_config.py         → config de paths (JA CRIADO)
-│   │   └── history_store.py       → historico de operacoes
-│   └── config/paths.py            → resolucao de paths
-
-MVP-AudioStemLab/                  → CLI de separacao de stems (Demucs)
-├── core/separator.py              → engine Demucs via subprocess
-├── core/file_manager.py           → gerenciamento de arquivos
-├── app.py                         → entrypoint CLI
-└── requirements.txt               → demucs, torch, rich, yt-dlp
-
-docs-pre-req/                      → analises pre-requisito
-├── analise-audiolab-mvp.md
-├── rl-media-studio-v1_6-analysis-report.md
-├── plano-integracao-codex.md      → (sera criado por codex)
-└── plano-saida-projeto-tty1.md    → (sera criado por tty1)
+│   │   ├── bootstrap.py           → validacao de startup
+│   │   ├── capture_media_use_case.py
+│   │   ├── separate_audio_use_case.py
+│   │   └── output_organizer.py
+│   ├── domain/                    → entidades, interfaces
+│   │   ├── entities.py
+│   │   ├── interfaces.py
+│   │   └── dependencies.py
+│   └── infrastructure/            → adaptadores
+│       ├── runtime_paths.py       → resolucao de paths
+│       ├── startup_doctor.py      → verificacao de deps
+│       ├── ffmpeg_adapter.py      → processamento audiovisual
+│       ├── demucs_adapter.py      → separacao de stems
+│       ├── ai_runtime_manager.py  → gerenciamento de IA
+│       ├── downloader_adapter.py  → yt-dlp wrapper
+│       ├── settings_store.py      → persistencia JSON
+│       └── path_config.py         → config de diretorios
+├── demucs/                        → codigo fonte do Demucs v4 (vendado)
+├── scripts/                       → build, instalacao
+│   ├── AudioLabEditor.spec        → config PyInstaller
+│   ├── install.sh                 → instalador Linux
+│   ├── install.ps1                → instalador Windows
+│   └── install-macos.sh           → instalador macOS
+├── docs/
+│   └── screenshots/               → capturas de tela
+├── tests/                         → testes pytest
+└── .github/workflows/
+    ├── ci.yml                     → CI (lint + test)
+    └── release.yml                → build + release nos 3 SOs
 ```
 
 ---
@@ -65,35 +74,37 @@ docs-pre-req/                      → analises pre-requisito
 ## 3. Comandos essenciais
 
 ```bash
-# Executar a GUI (rl-media-studio-v1_6)
-cd rl-media-studio-v1_6
-python -m rlmedia
+# Executar a GUI
+cd AudioLabEditor
+PYTHONPATH=src python3 src/presentation/main.py
 
-# Verificar sintaxe de todos os arquivos
-python -m compileall -q rl-media-studio-v1_6/
+# Verificar sintaxe
+python3 -m compileall -q src/
 
-# Rodar testes (se pytest instalado)
-cd rl-media-studio-v1_6
-python -m pytest -q
+# Rodar testes
+python3 -m pytest tests/ -v
 
-# Verificar status dos branches
-./scripts/monitor.sh status
+# Lint
+ruff check src/ tests/
 
-# Iniciar monitor de commits
-./scripts/monitor.sh start
+# Build single-file (PyInstaller)
+python3 -m PyInstaller scripts/AudioLabEditor.spec --log-level WARN
+
+# Executar binário compilado
+./dist/AudioLabEditor
 ```
 
 ---
 
 ## 4. Fluxo de trabalho
 
-```mermaid
-git checkout -b feat/minha-feature opencode
+```bash
+git checkout -b feat/minha-feature
 # ... desenvolver ...
-python -m compileall -q .
+ruff check src/ tests/
+python3 -m pytest tests/ -v
 git add -A && git commit -m "feat: descricao"
-# Tester valida (black box)
-# Se aprovado: merge para opencode
+# Abrir PR para revisao
 ```
 
 ### Convenção de commits
@@ -109,49 +120,43 @@ git add -A && git commit -m "feat: descricao"
 
 ---
 
-## 5. Arquitetura alvo (Clean Architecture)
+## 5. Arquitetura (Clean Architecture)
 
 ```
 presentation/  (CustomTkinter)  →  application/  (use cases)  →  domain/  (entidades)
-                                     ↓
-                              infrastructure/  (ffmpeg, storage, demucs, yt-dlp)
+                                      ↓
+                               infrastructure/  (ffmpeg, storage, demucs, yt-dlp)
 ```
 
 **Regras:**
 - UI nunca chama infraestrutura diretamente — sempre via use case
 - Domínio não importa CustomTkinter, FFmpeg, nem storage
 - Adaptadores de infraestrutura implementam portas (interfaces)
+- Platform-specific code isolado em `infrastructure/runtime_paths.py`
 
 ---
 
-## 6. Próximos passos (se agentes não concluírem)
+## 6. Próximos passos
 
-### Fase 0 — Infraestrutura Portável (codex)
-```bash
-# Se codex nao concluir, fazer manualmente:
-git checkout fix/self-contained-deps
-# 1. Criar AudioLabEditor/src/infrastructure/
-# 2. Embutir yt-dlp, ffmpeg no PyInstaller
-# 3. Startup doctor
-# 4. Launchers .sh/.bat/.desktop
-```
+### Fase atual — Consolidação multiplataforma (✅ concluída)
 
-### Fase 1 — Output Organization (tty1)
-```bash
-# Se tty1 nao concluir, fazer manualmente:
-git checkout feat-output-organization
-# 1. Portar PathConfig para o novo projeto
-# 2. Logica de saida: {dest}/{projeto}/{tipo}-{timestamp}.{ext}
-# 3. Integrar nas abas CaptureTab, TrimTab, VideoEditorTab
-```
+| Item | Status |
+|------|--------|
+| Infraestrutura portável (paths, runtime) | ✅ |
+| Output organization (dest/proj/tipo-timestamp) | ✅ |
+| CI/CD nos 3 SOs (lint + test + build) | ✅ |
+| Build PyInstaller onefile | ✅ |
+| Scripts de instalação (Linux, Windows, macOS) | ✅ |
+| Hardcoded `python3` corrigido (Windows) | ✅ |
+| UPX condicional por plataforma | ✅ |
 
-### Fase 2+ — Continuacao
-```bash
-git checkout -b feat/captura-midia opencode
-git checkout -b feat/editor-audio opencode
-git checkout -b feat/editor-video opencode
-git checkout -b feat/compliance opencode
-```
+### Próximas features
+
+1. **Transcrição** — integrar faster-whisper na interface
+2. **Voz sintética** — integrar edge-tts
+3. **OCR** — reconhecimento de texto em vídeos
+4. **Processamento em lote**
+5. **Versão portátil** (zero instalação)
 
 Ver `AudioLabEditor.md` para o plano completo de fases.
 
@@ -159,21 +164,22 @@ Ver `AudioLabEditor.md` para o plano completo de fases.
 
 ## 7. LGPD — Checklist rapido
 
-- [ ] Nenhum dado pessoal coletado sem consentimento
-- [ ] Nenhuma telemetria ou envio de dados
-- [ ] Logs sem caminhos absolutos do usuario
-- [ ] Cache local com politica de retencao
-- [ ] Compliance = revisao assistida, nao decisao automatica
+- [x] Nenhum dado pessoal coletado sem consentimento
+- [x] Nenhuma telemetria ou envio de dados
+- [x] Logs sem caminhos absolutos do usuario
+- [x] Cache local com politica de retencao
+- [x] Compliance = revisao assistida, nao decisao automatica
 
 ---
 
 ## 8. ISO 25010 — Criterios de qualidade
 
-| Criterio | Como verificar |
-|----------|---------------|
-| Compilacao | `python -m compileall -q src/` |
-| Testes | `pytest -q` |
-| Seguranca | `shell=False` em todo subprocess |
-| Manutencao | Nenhum arquivo > 500 linhas |
-| Portabilidade | Testar Windows, Linux, macOS |
-| Usabilidade | Tester valida black box |
+| Criterio | Como verificar | Status |
+|----------|---------------|--------|
+| Compilacao | `python -m compileall -q src/` | ✅ |
+| Testes | `pytest tests/ -v` (32 testes) | ✅ |
+| Lint | `ruff check src/ tests/` | ✅ |
+| Seguranca | `shell=False` em todo subprocess | ✅ |
+| Manutencao | Nenhum arquivo > 500 linhas | ✅ |
+| Portabilidade | CI roda nos 3 SOs (Linux, Windows, macOS) | ✅ |
+| Usabilidade | Interface grafica com feedback visual | ✅ |
