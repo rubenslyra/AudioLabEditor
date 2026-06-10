@@ -12,7 +12,9 @@ from infrastructure.ffmpeg_adapter import FFmpegAdapter
 from presentation.splash import SplashScreen
 from presentation.tabs.capture_tab import CaptureTab
 from presentation.tabs.stem_tab import StemTab
+from presentation.tabs.transcription_tab import TranscriptionTab
 from presentation.tabs.trim_tab import TrimTab
+from presentation.tabs.tts_tab import TtsTab
 from presentation.tabs.video_editor_tab import VideoEditorTab
 
 
@@ -52,11 +54,13 @@ def build_window(app, splash=None):
 
     step(0.35, "Montando interface...")
 
-    tab_values = ["Captura", "Audio", "Stems", "Video"]
+    tab_values = ["Captura", "Audio", "Stems", "Transcricao", "TTS", "Video"]
     tab_builders = {
         "Captura": lambda parent: CaptureTab(parent, app, capture_use_case),
         "Audio": lambda parent: TrimTab(parent, app),
         "Stems": lambda parent: StemTab(parent, app),
+        "Transcricao": lambda parent: TranscriptionTab(parent, app),
+        "TTS": lambda parent: TtsTab(parent, app),
         "Video": lambda parent: VideoEditorTab(parent, app),
     }
 

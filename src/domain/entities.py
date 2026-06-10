@@ -6,6 +6,8 @@ class MediaType(str, Enum):
     AUDIO = "audio"
     VIDEO = "video"
     STEM = "stem"
+    TRANSCRIPTION = "transcription"
+    TTS = "tts"
 
 
 class OutputCategory(str, Enum):
@@ -15,6 +17,8 @@ class OutputCategory(str, Enum):
     STEM_FULL4 = "stem-full4"
     STEM_EXTENDED6 = "stem-extended6"
     RENDER = "rendered"
+    TRANSCRIPTION = "transcribed"
+    TTS = "tts"
 
 
 @dataclass(frozen=True)

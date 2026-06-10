@@ -1,47 +1,33 @@
 from pathlib import Path
-from tkinter import filedialog, messagebox
+from tkinter import messagebox
 
 import customtkinter as ctk
 
-from application.batch_separate_audio_use_case import BatchSeparateAudioUseCase
-from application.separate_audio_use_case import SeparateAudioUseCase
-from domain.interfaces import StemRequest
+from application.generate_tts_use_case import GenerateTtsUseCase
+from domain.interfaces import TtsRequest
 from infrastructure.ai_runtime_manager import (
-    STEM_PACKAGES,
+    TTS_PACKAGES,
     AiRuntimeStatus,
-    check_stem_runtime,
+    check_tts_runtime,
     install_packages,
 )
-from infrastructure.demucs_adapter import DemucsSubprocessAdapter
+from infrastructure.edge_tts_adapter import TTS_VOICES, EdgeTtsSubprocessAdapter
 from infrastructure.path_config import PathConfig
 from presentation.widgets import LogBox
 
 
-class StemTab:
-    MODE_LABELS = {
-        "Apenas vocais": "vocals",
-        "4 stems (bass/drums/other/vocals)": "full4",
-        "6 stems (piano/guitar + full4)": "extended6",
-    }
-    FORMAT_LABELS = {
-        "WAV (qualidade maxima)": "wav",
-        "MP3 320kbps": "mp3",
-        "FLAC (compactado sem perda)": "flac",
-    }
-
-    def __init__(self, parent, app, use_case: SeparateAudioUseCase | None = None):
+class TtsTab:
+    def __init__(self, parent, app, use_case: GenerateTtsUseCase | None = None):
         self._app = app
         self._use_case = use_case
         self._path_config = PathConfig()
         self._last_output_dir: Path | None = None
         self._ai_status: AiRuntimeStatus | None = None
-        self._source_paths: list[Path] = []
 
-        self.source_var = ctk.StringVar(value="")
+        self.text_var = ctk.StringVar(value="")
         self.dest_var = ctk.StringVar(value="")
         self.project_var = ctk.StringVar(value="")
-        self.mode_var = ctk.StringVar(value=list(self.MODE_LABELS.keys())[0])
-        self.format_var = ctk.StringVar(value=list(self.FORMAT_LABELS.keys())[0])
+        self.voice_var = ctk.StringVar(value=TTS_VOICES[0])
 
         self.root = ctk.CTkScrollableFrame(parent, corner_radius=14)
         self.root.pack(fill="both", expand=True, padx=10, pady=10)
@@ -63,16 +49,16 @@ class StemTab:
         return header
 
     def _show_checking(self):
-        frame = self._push("Separador de Stems", "Verificando dependencias...")
+        frame = self._push("Sintese de Voz (TTS)", "Verificando dependencias...")
         self._spinner = ctk.CTkProgressBar(frame, mode="indeterminate", width=400)
         self._spinner.pack(pady=20)
         self._spinner.start()
-        self._status_msg = ctk.CTkLabel(frame, text="Verificando pacotes de IA...")
+        self._status_msg = ctk.CTkLabel(frame, text="Verificando pacotes de TTS...")
         self._status_msg.pack()
         self.root.after(50, self._do_check)
 
     def _do_check(self):
-        self._ai_status = check_stem_runtime()
+        self._ai_status = check_tts_runtime()
         if self._spinner:
             self._spinner.stop()
         if self._ai_status.available:
@@ -81,7 +67,7 @@ class StemTab:
             self._show_missing()
 
     def _show_missing(self):
-        self._push("Separador de Stems", "Dependencias de IA necessarias")
+        self._push("Sintese de Voz (TTS)", "Dependencias de TTS necessarias")
 
         container = ctk.CTkFrame(self.root, corner_radius=16)
         container.pack(fill="x", padx=14, pady=(0, 20))
@@ -89,14 +75,14 @@ class StemTab:
 
         ctk.CTkLabel(
             container,
-            text="Pacotes necessarios para separacao de stems:",
+            text="Pacotes necessarios para sintese de voz:",
             font=ctk.CTkFont(size=14),
         ).pack(anchor="w", padx=20, pady=(16, 8))
 
-        pkg_box = ctk.CTkTextbox(container, height=200, width=520)
+        pkg_box = ctk.CTkTextbox(container, height=100, width=520)
         pkg_box.pack(padx=20, pady=(0, 12))
         lines = []
-        for pkg in STEM_PACKAGES:
+        for pkg in TTS_PACKAGES:
             status = "\u2713" if pkg not in self._ai_status.missing else "\u2717"
             lines.append(f"  {status} {pkg['import']} ({pkg['pip']})")
         pkg_box.insert("1.0", "\n".join(lines))
@@ -116,7 +102,6 @@ class StemTab:
         self._install_log = LogBox(container, height=120)
         self._install_progress = ctk.CTkProgressBar(container)
         self._install_status = ctk.CTkLabel(container, text="", anchor="w")
-
         self._install_progress.set(0)
 
     def _start_install(self):
@@ -154,13 +139,13 @@ class StemTab:
 
     def _show_ready(self):
         if self._use_case is None:
-            self._use_case = SeparateAudioUseCase(demucs=DemucsSubprocessAdapter())
+            self._use_case = GenerateTtsUseCase(tts=EdgeTtsSubprocessAdapter())
 
         self._clear()
 
         self._push(
-            "Separador de Stems",
-            "Separe instrumentos e vocais de arquivos de audio usando IA (Demucs). Selecione um ou mais arquivos.",
+            "Sintese de Voz (TTS)",
+            "Converta texto em audio natural usando Microsoft Edge TTS.",
         )
         sep_frame = ctk.CTkFrame(self.root, fg_color="transparent")
         sep_frame.pack(fill="x", padx=14, pady=(0, 12))
@@ -169,24 +154,9 @@ class StemTab:
         self._stack.append(sep_frame)
 
         row = 0
-        ctk.CTkLabel(sep_frame, text="Arquivos de origem:", width=140).grid(row=row, column=0, sticky="w", pady=4)
-        self.source_entry = ctk.CTkEntry(
-            sep_frame, textvariable=self.source_var, placeholder_text="Selecione um ou mais arquivos..."
-        )
-        self.source_entry.grid(row=row, column=1, sticky="ew", padx=(0, 8), pady=4)
-        self.source_btn = ctk.CTkButton(sep_frame, text="Procurar", width=110, command=self._choose_source)
-        self.source_btn.grid(row=row, column=2, pady=4)
-        self.clear_btn = ctk.CTkButton(sep_frame, text="Limpar", width=80, command=self._clear_sources)
-        self.clear_btn.grid(row=row, column=3, padx=(4, 0), pady=4)
-
-        row += 1
-        self.file_list_label = ctk.CTkLabel(sep_frame, text="", anchor="w", justify="left")
-        self.file_list_label.grid(row=row, column=0, columnspan=4, sticky="w", padx=140, pady=(0, 4))
-
-        row += 1
         ctk.CTkLabel(sep_frame, text="Pasta de destino:", width=140).grid(row=row, column=0, sticky="w", pady=4)
         self.dest_entry = ctk.CTkEntry(
-            sep_frame, textvariable=self.dest_var, placeholder_text="Escolha onde salvar os stems..."
+            sep_frame, textvariable=self.dest_var, placeholder_text="Escolha onde salvar o audio..."
         )
         self.dest_entry.grid(row=row, column=1, sticky="ew", padx=(0, 8), pady=4)
         self.dest_btn = ctk.CTkButton(sep_frame, text="Procurar", width=110, command=self._choose_dest)
@@ -202,32 +172,34 @@ class StemTab:
         options_frame = ctk.CTkFrame(self.root, corner_radius=16)
         options_frame.pack(fill="x", padx=14, pady=(0, 12))
         options_frame.grid_columnconfigure(1, weight=1)
-        options_frame.grid_columnconfigure(3, weight=1)
         self._stack.append(options_frame)
 
-        ctk.CTkLabel(options_frame, text="Modo de separacao").grid(row=0, column=0, padx=(12, 8), pady=12, sticky="w")
-        self.mode_menu = ctk.CTkOptionMenu(
+        ctk.CTkLabel(options_frame, text="Voz").grid(row=0, column=0, padx=(12, 8), pady=12, sticky="w")
+        self.voice_menu = ctk.CTkOptionMenu(
             options_frame,
-            values=list(self.MODE_LABELS.keys()),
-            variable=self.mode_var,
-            width=280,
-        )
-        self.mode_menu.grid(row=0, column=1, padx=(0, 16), pady=12, sticky="w")
-
-        ctk.CTkLabel(options_frame, text="Formato de saida").grid(row=0, column=2, padx=(0, 8), pady=12, sticky="w")
-        self.format_menu = ctk.CTkOptionMenu(
-            options_frame,
-            values=list(self.FORMAT_LABELS.keys()),
-            variable=self.format_var,
+            values=TTS_VOICES,
+            variable=self.voice_var,
             width=260,
         )
-        self.format_menu.grid(row=0, column=3, padx=(0, 12), pady=12, sticky="w")
+        self.voice_menu.grid(row=0, column=1, padx=(0, 12), pady=12, sticky="w")
 
-        self.start_btn = ctk.CTkButton(self.root, text="Iniciar separacao", height=44, command=self._start_separation)
+        text_frame = ctk.CTkFrame(self.root, corner_radius=16)
+        text_frame.pack(fill="x", padx=14, pady=(0, 12))
+        self._stack.append(text_frame)
+
+        ctk.CTkLabel(text_frame, text="Texto para sintetizar:", font=ctk.CTkFont(size=14)).pack(
+            anchor="w", padx=12, pady=(12, 4)
+        )
+
+        self.text_box = ctk.CTkTextbox(text_frame, height=160, wrap="word")
+        self.text_box.pack(fill="x", padx=12, pady=(0, 12))
+        self.text_box.insert("1.0", "Digite aqui o texto que deseja converter em audio...")
+
+        self.start_btn = ctk.CTkButton(self.root, text="Gerar audio", height=44, command=self._start_synthesis)
         self.start_btn.pack(fill="x", padx=14, pady=(0, 12))
         self._stack.append(self.start_btn)
 
-        self.status_label = ctk.CTkLabel(self.root, text="Configure os caminhos e clique em Iniciar.")
+        self.status_label = ctk.CTkLabel(self.root, text="Digite o texto, configure a voz e clique em Gerar.")
         self.status_label.pack(anchor="w", padx=14)
         self._stack.append(self.status_label)
 
@@ -236,7 +208,7 @@ class StemTab:
         self.progress.pack(fill="x", padx=14, pady=(8, 12))
         self._stack.append(self.progress)
 
-        self.logs = LogBox(self.root, height=220)
+        self.logs = LogBox(self.root, height=180)
         self.logs.pack(fill="x", padx=14, pady=(0, 12))
         self._stack.append(self.logs)
 
@@ -256,21 +228,6 @@ class StemTab:
         if self._path_config.get_dest_dir():
             self.dest_var.set(self._path_config.get_dest_dir())
 
-    def _update_file_list_display(self):
-        count = len(self._source_paths)
-        if count == 0:
-            self.source_var.set("")
-            self.file_list_label.configure(text="")
-        elif count == 1:
-            self.source_var.set(str(self._source_paths[0]))
-            self.file_list_label.configure(text="")
-        else:
-            self.source_var.set(f"{count} arquivos selecionados")
-            names = "\n".join(f"  \u2022 {p.name}" for p in self._source_paths[:5])
-            if count > 5:
-                names += f"\n  ... e mais {count - 5}"
-            self.file_list_label.configure(text=f"Arquivos:\n{names}")
-
     def _reveal_output_dir(self):
         import subprocess
         import sys
@@ -284,24 +241,9 @@ class StemTab:
         else:
             subprocess.Popen(["xdg-open", str(path)])
 
-    def _choose_source(self):
-        files = filedialog.askopenfilenames(
-            title="Selecionar arquivos de audio ou video",
-            filetypes=[
-                ("Audio/Video", "*.mp3 *.wav *.flac *.ogg *.m4a *.mp4 *.avi *.mkv *.mov *.webm"),
-                ("Todos", "*.*"),
-            ],
-        )
-        if files:
-            self._source_paths = [Path(f) for f in files]
-            self._update_file_list_display()
-
-    def _clear_sources(self):
-        self._source_paths.clear()
-        self._update_file_list_display()
-
     def _choose_dest(self):
-        folder = filedialog.askdirectory(title="Selecionar pasta de destino dos stems")
+        from tkinter import filedialog
+        folder = filedialog.askdirectory(title="Selecionar pasta de destino do audio TTS")
         if folder:
             self.dest_var.set(folder)
             self._path_config.set_dest_dir(folder)
@@ -311,93 +253,44 @@ class StemTab:
         self.status_label.configure(text=message)
         self.logs.append(message)
 
-    def _start_separation(self):
+    def _start_synthesis(self):
+        text = self.text_box.get("1.0", "end-1c").strip()
         dest = self.dest_var.get().strip()
 
-        if not self._source_paths:
-            messagebox.showerror("Origem ausente", "Selecione um ou mais arquivos de audio ou video.")
+        if not text:
+            messagebox.showerror("Texto ausente", "Digite o texto que deseja converter em audio.")
             return
         if not dest:
-            messagebox.showerror("Destino ausente", "Escolha uma pasta de destino para os stems.")
+            messagebox.showerror("Destino ausente", "Escolha uma pasta de destino para o audio.")
             return
 
         self.progress.set(0)
-        self.logs.append("Preparando separacao de stems...")
+        self.logs.append("Preparando sintese de voz...")
 
-        mode = self.MODE_LABELS[self.mode_var.get()]
-        output_format = self.FORMAT_LABELS[self.format_var.get()]
-        project_name = self.project_var.get().strip()
-
-        if len(self._source_paths) == 1:
-            self._start_single(dest, mode, output_format, project_name)
-        else:
-            self._start_batch(dest, mode, output_format, project_name)
-
-    def _start_single(self, dest: str, mode: str, output_format: str, project_name: str):
-        request = StemRequest(
-            source_path=self._source_paths[0],
-            mode=mode,
-            output_format=output_format,
+        request = TtsRequest(
+            text=text,
+            voice=self.voice_var.get(),
             dest_dir=dest,
-            project_name=project_name,
+            project_name=self.project_var.get().strip(),
         )
 
         def task():
             try:
                 result = self._use_case.execute(request, progress_cb=self._set_progress)
-                self._last_output_dir = result.output_dir
+                self._last_output_dir = result.output_path.parent
 
                 def _done():
                     self._show_open_dir_button()
-                    self.logs.append(f"Stems gerados em: {result.output_dir}")
+                    self.logs.append(f"Audio TTS gerado: {result.output_path}")
+                    self.logs.append(f"Voz: {result.voice}")
+                    self.logs.append(f"Tamanho do texto: {result.text_length} caracteres")
 
                 self.root.after(0, _done)
             except Exception as exc:
                 error = str(exc)
 
                 def _error():
-                    messagebox.showerror("Erro na separacao", error)
-                    self.logs.append(f"ERRO: {error}")
-
-                self.root.after(0, _error)
-
-        import threading
-
-        threading.Thread(target=task, daemon=True).start()
-
-    def _start_batch(self, dest: str, mode: str, output_format: str, project_name: str):
-        batch_use_case = BatchSeparateAudioUseCase(
-            demucs=DemucsSubprocessAdapter(),
-            path_config=self._path_config,
-        )
-
-        def task():
-            try:
-                result = batch_use_case.execute(
-                    source_paths=self._source_paths,
-                    mode=mode,
-                    output_format=output_format,
-                    dest_dir=dest,
-                    project_name=project_name,
-                    progress_cb=self._set_progress,
-                )
-                self._last_output_dir = result.output_dir
-
-                def _done():
-                    self._show_open_dir_button()
-                    self.logs.append(f"Lote concluido em: {result.output_dir}")
-                    self.logs.append(f"Sucesso: {result.succeeded}/{result.total}")
-                    if result.failed:
-                        self.logs.append("Falhas:")
-                        for name, err in result.failed:
-                            self.logs.append(f"  \u2717 {name}: {err}")
-
-                self.root.after(0, _done)
-            except Exception as exc:
-                error = str(exc)
-
-                def _error():
-                    messagebox.showerror("Erro no lote", error)
+                    messagebox.showerror("Erro na sintese", error)
                     self.logs.append(f"ERRO: {error}")
 
                 self.root.after(0, _error)

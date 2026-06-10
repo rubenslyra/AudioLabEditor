@@ -60,3 +60,54 @@ class StemResult:
 
 class DemucsPort:
     def separate(self, request: StemRequest, progress_cb: ProgressCallback = None) -> StemResult: ...
+
+
+@dataclass
+class BatchStemResult:
+    output_dir: Path
+    results: list[StemResult]
+    failed: list[tuple[str, str]]  # [(source_name, error_message)]
+    total: int
+    succeeded: int
+
+
+@dataclass
+class TranscriptionRequest:
+    source_path: Path
+    language: str = "pt"
+    model_size: str = "base"
+    dest_dir: str = ""
+    project_name: str = ""
+
+
+@dataclass
+class TranscriptionResult:
+    output_dir: Path
+    source_name: str
+    language: str
+    segments_count: int
+
+
+class TranscriptionPort:
+    def transcribe(
+        self, request: TranscriptionRequest, progress_cb: ProgressCallback = None
+    ) -> TranscriptionResult: ...
+
+
+@dataclass
+class TtsRequest:
+    text: str
+    voice: str = "pt-BR-FranciscaNeural"
+    dest_dir: str = ""
+    project_name: str = ""
+
+
+@dataclass
+class TtsResult:
+    output_path: Path
+    voice: str
+    text_length: int
+
+
+class TtsPort:
+    def synthesize(self, request: TtsRequest, progress_cb: ProgressCallback = None) -> TtsResult: ...

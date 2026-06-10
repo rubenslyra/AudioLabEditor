@@ -4,193 +4,201 @@
 
 ---
 
-## 1. Topologia dos Terminais
+## 1. Topologia
 
-| Terminal | Aplicação | Branch | Diretório |
+| Terminal | Ferramenta | Branch | Diretório |
 |----------|-----------|--------|-----------|
-| **tty0** (Terminator) | codex | `fix/self-contained-deps` | `~/source/TestesTECNICOS/AudioLabEditor/` |
-| **tty1** (Terminator) | opencode | `feat-output-organization` | `~/source/TestesTECNICOS/AudioLabEditor/` |
-| **tty2** (bash normal) | opencode (coordenação) | `feat/path-config-ui` | `~/source/TestesTECNICOS/AudioLabEditor/` |
+| **tty0** | opencode (big-pickle) | `main` | `~/source/TestesTECNICOS/AudioLabEditor/` |
+
+**Branch atual:** `main` (todas as features mergidas)
+**Tag atual:** `v0.3.0` (latest no GitHub)
+**Data do handoff:** 2026-06-10
 
 ---
 
 ## 2. Ao retomar
 
-### 2.1 Iniciar o monitor
+### Verificar estado
 
-```bash
-# No tty2 (coordenação):
-cd ~/source/TestesTECNICOS/AudioLabEditor
-./scripts/monitor.sh start
-```
-
-### 2.2 Verificar branches
-
-```bash
-./scripts/monitor.sh status
-```
-
-Resultado esperado (atualizado em 2026-06-09):
-
-| Agente | Branch | Status | Último commit |
-|--------|--------|--------|---------------|
-| codex (tty0) | `fix/self-contained-deps` | ✅ trabalhou | `2f07815` — criou `AudioLabEditor/` base |
-| opencode (tty1) | `feat-output-organization` | ✅ trabalhou | `13d753b` — portou stems com clean arch |
-| coordenador | `feat/path-config-ui` | ✅ coordenação | `42a175b` — handoff document |
-
-### 2.3 Se houver novos commits (agentes trabalharam)
-
-O monitor emite alertas. Seguir o `TESTING_PROTOCOL.md`:
-
-1. **White box:** `python -m compileall -q .`
-2. **Black box:** tester (você) valida a funcionalidade
-3. **Gate:** relatório → aprovado → merge
-
-### 2.4 Se NÃO houver novos commits (agentes não trabalharam)
-
-```bash
-# tty0: reenviar ordem ao codex
-echo "cat INSTRUCTIONS_CODEX.md && comecar" > /dev/pts/0
-
-# tty1: reenviar ordem ao opencode
-echo "cat INSTRUCTIONS_TTY1.md && comecar" > /dev/pts/1
-```
-
-Ou, se os terminais foram fechados:
-
-```bash
-# Abrir Terminator com:
-terminator --new-tab -e "codex" &
-terminator --new-tab -e "opencode" &
-```
-
-E manualmente executar em cada um:
-
-**tty0 (codex):**
 ```bash
 cd ~/source/TestesTECNICOS/AudioLabEditor
-git checkout fix/self-contained-deps
-cat INSTRUCTIONS_CODEX.md
+git status
+git log --oneline -5
+gh release list --limit 3
+python3 -m pytest tests/ -v
 ```
 
-**tty1 (opencode):**
-```bash
-cd ~/source/TestesTECNICOS/AudioLabEditor
-git checkout feat-output-organization
-cat INSTRUCTIONS_TTY1.md
+### Commits recentes (do mais novo para o mais velho)
+
+```
+40dd012 fix: copiar artifacts para diretorio flat em vez de mv para mesma pasta
+eddae6e fix: rename artifacts before upload para evitar conflito de basename
+56b006d docs: screenshots, readme e documentos atualizados; feat: scripts instalacao...
+9e2d6e0 fix: release workflow usa gh CLI em vez de action-gh-release (401 error)
+d9dac79 feat: CI/CD multiplataforma e suporte a Windows/macOS
+cd4d998 feat: README profissional com shields, creditos e documentacao completa
+b6a208e feat: vendar demucs como pacote local, torch como gate de IA
+74f2327 refactor: remove AppImage, instalar via install.sh com desktop integration
+75a7f13 refactor: startup doctor split required/optional, Demucs opcional, profile base padrao
+8c62ecc refactor: PyInstaller onefile (no more _internal folder)
 ```
 
 ---
 
-## 3. Estado Atual (após merge + white box)
+## 3. Estado Atual
 
-**Branch coordenador (merged):** `feat/path-config-ui`  
-**Data:** 2026-06-09
+### Build e CI/CD
 
-```
-Merge completo:
-├── código codex:  PyInstaller spec, startup doctor, runtime_paths, bootstrap, launchers
-├── código opencode: PathConfig, OutputOrganizer, CaptureTab, StemTab, TrimTab, VideoEditorTab
-├── pyproject.toml: deps unificadas, ruff/pytest config
-└── tests/  → 10/10 passam ✅
-```
+| Item | Status |
+|------|--------|
+| PyInstaller onefile | ✅ ~132MB Linux |
+| CI (lint + test) 3 SOs | ✅ GitHub Actions |
+| Release workflow 3 SOs | ✅ gera binarios + anexa à release |
+| Release latest | ✅ v0.3.0 com assets Linux/macOS/Windows |
+| UPX | ✅ 5.0.0 instalado, condicional (`sys.platform != "darwin"`) |
 
-### White Box Gate ✅
+### Funcionalidades implementadas
 
-| Critério | Resultado |
-|----------|-----------|
-| `compileall -q src/` | ✅ 0 erros |
-| `ruff check src/` | ✅ 0 erros |
-| `shell=True` | ✅ 0 ocorrências |
-| `<500 linhas/arquivo src/` | ✅ max `254` linhas |
-| Testes | ✅ 10/10 passam |
-| GUI smoke test | ✅ "Tabs rendered successfully" |
-| subprocess `shell=False` | ✅ padrão seguro |
+| Feature | Aba | Status | Depoisncia |
+|---------|-----|--------|-----------|
+| Captura de mídia (yt-dlp) | Captura | ✅ | yt-dlp |
+| Corte/Conversão de áudio | Audio | ✅ | ffmpeg |
+| Separação de stems (Demucs) | Stems | ✅ | torch, demucs |
+| **Transcrição (faster-whisper)** | **Transcricao** | **✅ Nova** | faster-whisper |
+| **Síntese de voz (edge-tts)** | **TTS** | **✅ Nova** | edge-tts |
+| Editor de vídeo | Video | ✅ | ffmpeg |
 
-### Commits no `feat/path-config-ui`
+### Testes
 
-```
-92fc67b docs: update return handoff with real agent progress
-42a175b docs: add return handoff document
-d481502 feat(output): add OutputOrganizer and port PathConfig
-...
-```
+| Suite | Resultado |
+|-------|-----------|
+| `ruff check src/ tests/ scripts/` | ✅ 0 erros |
+| `pytest tests/` | ✅ 70/70 passam (0.41s) |
 
-### Arquivos de coordenação
+### Scripts de instalação
 
-| Arquivo | Propósito |
+| Script | SO | Finalidade |
+|--------|----|------------|
+| `scripts/install.sh` | Linux | Integracao ao menu + PATH |
+| `scripts/install.ps1` | Windows | Atalho Menu Iniciar + PATH |
+| `scripts/install-macos.sh` | macOS | Bundle .app + /usr/local/bin |
+
+### Screenshots (`docs/screenshots/`)
+
+| Arquivo | Conteudo |
+|---------|----------|
+| `main_window.png` | Visao geral com logo + aba Captura |
+| `tab_capture.png` | Aba Captura de Midia |
+| `tab_trim.png` | Aba Corte de Audio com waveform |
+| `tab_video.png` | Aba Editor de Video |
+| `tab_stems.png` | Aba Separador de Stems com status IA |
+
+---
+
+## 4. Correções realizadas nesta sessão
+
+### 🔴 Bugs corrigidos
+
+| Arquivo | Problema | Correção |
+|---------|----------|----------|
+| `src/infrastructure/ai_runtime_manager.py` | `python3` hardcoded em frozen builds (quebra no Windows) | `_find_system_python()` prioriza `python` no Windows |
+| `src/infrastructure/demucs_adapter.py` | `python3` hardcoded em frozen builds | `_resolve_python()` detecta Windows (`python` → `python3` → `py`) |
+| `scripts/AudioLabEditor.spec` | `upx=True` quebra no macOS | `upx=sys.platform != "darwin"` |
+| `.github/workflows/release.yml` | `mv` para mesma pasta causa erro "same file" | `cp` para `artifacts-out/` flat |
+
+### 🟡 Melhorias
+
+| Arquivo | Mudança |
+|---------|---------|
+| `src/infrastructure/runtime_paths.py` | Linux usa `APP_NAME.lower()` em vez de `"audiolabeditor"` hardcoded |
+| `.github/workflows/release.yml` | Renomeacao de artifacts com nome unico por plataforma |
+| `src/presentation/tabs/stem_tab.py` | `_reveal_file` → `_reveal_output_dir` (nomenclatura) |
+
+### 📄 Documentação
+
+| Arquivo | Mudança |
+|---------|---------|
+| `README.md` | Seção de Screenshots + instruções Windows/macOS |
+| `APRESENTACAO.md` | Screenshot, estado atual reescrito, instalação sem AppImage |
+| `DEVELOPER_HANDBOOK.md` | Estrutura de diretórios real, comandos, checkboxes preenchidos |
+
+### 🆕 Novas funcionalidades
+
+| Arquivo | Descrição |
 |---------|-----------|
-| `AudioLabEditor.md` | Plano base com 7 fases |
-| `TESTING_PROTOCOL.md` | Gates ISO 25010 / IEC / LGPD |
-| `INSTRUCTIONS_CODEX.md` | Instruções para codex (tty0) |
-| `INSTRUCTIONS_TTY1.md` | Instruções para opencode (tty1) |
-| `DEVELOPER_HANDBOOK.md` | Manual para desenvolvimento manual |
-| `RETURN_HANDOFF.md` | Este documento — handoff de retorno |
-| `MARCO_ZERO.md` | Checkpoint do estado inicial |
-| `scripts/monitor.py` | Daemon de monitoramento |
-| `scripts/monitor.sh` | Wrapper start/stop/status |
+| `src/domain/interfaces.py` | `TranscriptionPort`, `TtsPort` + requests/results; `BatchStemResult` |
+| `src/domain/entities.py` | `MediaType.TRANSCRIPTION/TTS`, `OutputCategory.TRANSCRIPTION/TTS` |
+| `src/infrastructure/whisper_adapter.py` | `WhisperSubprocessAdapter` — transcrição via faster-whisper |
+| `src/infrastructure/edge_tts_adapter.py` | `EdgeTtsSubprocessAdapter` — síntese de voz via edge-tts |
+| `src/application/transcribe_audio_use_case.py` | Use case de transcrição |
+| `src/application/generate_tts_use_case.py` | Use case de TTS |
+| `src/application/batch_separate_audio_use_case.py` | Use case de lote de stems (N arquivos) |
+| `src/presentation/tabs/transcription_tab.py` | Aba "Transcricao" com detector de runtime, install, SRT/TXT output |
+| `src/presentation/tabs/tts_tab.py` | Aba "TTS" com 18 vozes, seletor de voz, texto multilinha |
+| `src/presentation/tabs/stem_tab.py` | Refatorado: suporte a múltiplos arquivos + processamento em lote |
+| `src/presentation/main.py` | Registro das abas "Transcricao" e "TTS" no seletor |
+| `scripts/AudioLabEditor.spec` | hiddenimports atualizados com todos os novos módulos |
+| `pyproject.toml` | Adicionado `pytest-timeout` às dependências dev |
+| `tests/test_ai_modules.py` | 38 novos testes (domínio, adapters, use cases, lote) |
+| `tests/test_build_configuration.py` | Verificação dos novos hiddenimports no spec |
+| `RETURN_HANDOFF.md` | Atualizado com novo estado |
 
 ---
 
-## 4. Próximas tarefas
+## 5. Problemas conhecidos
 
-### Fase 0 (continuação) — codex (tty0) em `fix/self-contained-deps`
-
-- [x] ~~Criar `AudioLabEditor/` base~~ ✅ feito
-- [x] ~~Startup doctor~~ ✅ feito (merged)
-- [x] ~~Launchers .sh/.bat/.desktop~~ ✅ feito (merged)
-- [x] ~~PyInstaller spec~~ ✅ feito (merged)
-- [x] ~~runtime_paths relocatable~~ ✅ feito (merged)
-- [ ] **Criar** `docs-pre-req/plano-integracao-codex.md`
-- [ ] **Embutir yt-dlp, ffmpeg, Demucs no PyInstaller** — spec precisa das dependências reais
-- [ ] **Fase 0.5 Gate:** tester executa com duplo clique sem erro
-
-### Fase 1 (continuação) — opencode (tty1) em `feat-output-organization`
-
-- [x] ~~Portar PathConfig~~ ✅ feito (merged)
-- [x] ~~Portar CaptureTab~~ ✅ feito (merged)
-- [x] ~~Portar StemTab + SeparateAudioUseCase~~ ✅ feito (merged)
-- [x] ~~Portar TrimTab~~ ✅ feito (merged)
-- [x] ~~Portar VideoEditorTab~~ ✅ feito (merged)
-- [x] ~~OutputOrganizer~~ ✅ feito (merged)
-- [x] ~~Output: `{dest}/{projeto}/{tipo}-{timestamp}.{ext}`~~ ✅ feito
-- [x] ~~PathConfig em todas as 4 abas~~ ✅ feito
-- [ ] **Criar** `docs-pre-req/plano-saida-projeto-tty1.md`
-- [ ] **Fase 1.5 Gate:** tester abre app, configura paths, gera stem
-
-### Próximo marco — Black Box Gate
-
-Após agents completarem tarefas acima, coordenador:
-1. Verifica novos commits no monitor
-2. Executa white box novamente
-3. Tester valida black box (checklist abaixo)
-4. Aprova → merge para `opencode`
-
-**Black Box Checklist:**
-- [ ] 4 abas renderizadas (Capturar, Stems, Cortar, Editor)
-- [ ] Browse source + dest sem paths default
-- [ ] Output folder criado em `{dest}/{projeto}/audio-stem-{modo}-{timestamp}/`
-- [ ] Janela redimensiona sem travamentos
-- [ ] Startup Doctor avisa se ffmpeg faltar
-- [ ] shell=False verificado por auditoria de código
+1. **Node.js 20 deprecated** nos runners do GH Actions — aviso nas annotations, precisa atualizar para `actions/checkout@v5`, `actions/setup-python@v6` etc. até 2026-09-16
+2. **windows-latest será redirecionado** para `windows-2025-vs2026` a partir de 2026-06-15
+3. **UPX compressão mínima** (~0.02%) em binários PyInstaller — pode ser desligado sem impacto
 
 ---
 
-## 5. Comandos rápidos
+## 6. Problemas corrigidos nesta sessão
+
+| Problema | Correção |
+|----------|----------|
+| CI quebra com `--timeout=30` (plugin ausente) | `pytest-timeout>=2` adicionado às dev deps |
+| PyInstaller build frozen não incluiria novas abas | `hiddenimports` atualizados no `.spec` |
+| Spec sem verificação dos novos módulos | Teste `test_pyinstaller_spec_includes_core_packages` ampliado |
+
+## 7. Próximos passos sugeridos
+
+### Próximos
+- [ ] Adicionar screenshots das abas Transcricao, TTS e lote de stems
+- [ ] Testar integração real com faster-whisper e edge-tts (requer GPU/Internet)
+- [ ] Fazer release `v0.4.0` com as novas funcionalidades
+
+### Médio prazo
+- [ ] OCR em vídeos (PaddleOCR)
+- [ ] Versão portátil (zero instalação) para Windows/macOS
+- [ ] Atualizar actions para Node.js 24
+
+---
+
+## 7. Comandos rápidos
 
 ```bash
-# Compilar tudo
-python -m compileall -q AudioLabEditor/src/
+# Executar GUI
+cd ~/source/TestesTECNICOS/AudioLabEditor
+PYTHONPATH=src python3 src/presentation/main.py
 
-# Executar GUI (após merge)
-cd AudioLabEditor && python -m presentation.main
+# Build
+python3 -m PyInstaller scripts/AudioLabEditor.spec --log-level WARN
 
-# Status dos branches
-./scripts/monitor.sh status
+# Testes
+python3 -m pytest tests/ -v
 
-# Iniciar monitor
-./scripts/monitor.sh start
+# Lint
+ruff check src/ tests/
+
+# Criar nova release
+git tag v0.4.0
+git push origin v0.4.0
 
 # Ver ultimos commits
-git log --oneline -5 --all --graph
+git log --oneline -10
+
+# Ver binary buildado
+ls -lh dist/AudioLabEditor
+file dist/AudioLabEditor
 ```
