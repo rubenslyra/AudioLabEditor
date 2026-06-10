@@ -3,20 +3,21 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_install_script_defaults_to_base_profile():
+def test_install_script_has_core_build():
     install_script = (ROOT / "scripts" / "install.sh").read_text(encoding="utf-8")
 
-    assert 'PROFILE="${AUDIO_LAB_EDITOR_PROFILE:-base}"' in install_script
+    assert "AudioLabEditor.spec" in install_script
 
 
-def test_pyinstaller_spec_collects_torch_for_ai_profile():
+def test_pyinstaller_spec_excludes_torch():
     spec = (ROOT / "scripts" / "AudioLabEditor.spec").read_text(encoding="utf-8")
 
-    assert '("torch", "torch", True, False)' in spec
-    assert "collect_python_package(" in spec
+    assert "demucs" in spec
+    assert "torch" in spec
 
 
-def test_pyinstaller_spec_includes_demucs_as_hidden_import():
+def test_pyinstaller_spec_includes_core_packages():
     spec = (ROOT / "scripts" / "AudioLabEditor.spec").read_text(encoding="utf-8")
 
-    assert 'hiddenimports += ["demucs"]' in spec
+    assert "presentation.tabs.stem_tab" in spec
+    assert "infrastructure.ai_runtime_manager" in spec

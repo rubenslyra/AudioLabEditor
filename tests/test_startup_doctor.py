@@ -1,12 +1,11 @@
 from infrastructure.startup_doctor import (
     check_startup_dependencies,
     startup_error_message,
-    startup_warning_message,
 )
 
 
 def test_system_tools_are_required():
-    statuses = check_startup_dependencies("base")
+    statuses = check_startup_dependencies()
 
     ffmpeg = next(s for s in statuses if s.name == "ffmpeg")
     ffprobe = next(s for s in statuses if s.name == "ffprobe")
@@ -15,40 +14,15 @@ def test_system_tools_are_required():
     assert ffprobe.required is True
 
 
-def test_torch_is_optional_in_ai_profile():
-    statuses = check_startup_dependencies("ai")
-
-    torch = next(s for s in statuses if s.name == "torch")
-
-    assert torch.required is False
-
-
-def test_faster_whisper_is_optional_in_full_profile():
-    statuses = check_startup_dependencies("full")
-
-    whisper = next(s for s in statuses if s.name == "faster-whisper")
-
-    assert whisper.required is False
-
-
 def test_local_data_dir_is_required():
-    statuses = check_startup_dependencies("base")
+    statuses = check_startup_dependencies()
 
     data_dir = next(s for s in statuses if s.name == "local-data-dir")
 
     assert data_dir.required is True
 
 
-def test_startup_error_ignores_optional_missing():
-    message = startup_error_message("ai")
+def test_startup_error_empty_when_all_ok():
+    message = startup_error_message()
 
-    err = message
-    if err:
-        assert "torch" not in err
-
-
-def test_startup_warning_includes_optional_missing():
-    message = startup_warning_message("ai")
-
-    if message:
-        assert "opcionais" in message
+    assert message == ""

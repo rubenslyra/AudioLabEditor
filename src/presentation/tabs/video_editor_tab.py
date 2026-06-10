@@ -6,6 +6,7 @@ import customtkinter as ctk
 from application.output_organizer import PROJECT_NAME_FALLBACK, OutputOrganizer
 from domain.entities import MediaType, OutputCategory, OutputRequest
 from infrastructure.path_config import PathConfig
+from infrastructure.runtime_paths import find_executable
 from presentation.widgets import LogBox
 
 
@@ -14,6 +15,7 @@ class VideoEditorTab:
         self._app = app
         self._path_config = PathConfig()
         self._output_organizer = OutputOrganizer(self._path_config)
+        self._ffmpeg_path = find_executable("ffmpeg") or "ffmpeg"
         self._last_output_path: Path | None = None
 
         self.input_var = ctk.StringVar()
@@ -181,14 +183,11 @@ class VideoEditorTab:
 
         import os
         import subprocess
-        import sys
 
         try:
             threads = str(max(1, os.cpu_count() or 1))
             cmd = [
-                sys.executable,
-                "-m",
-                "ffmpeg",
+                str(self._ffmpeg_path),
                 "-y",
                 "-hide_banner",
                 "-loglevel",

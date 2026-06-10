@@ -9,14 +9,6 @@ from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs, co
 
 project_root = Path(SPECPATH).resolve().parent
 src_root = project_root / "src"
-profile = os.environ.get("AUDIO_LAB_EDITOR_PROFILE", "base").lower()
-
-
-def safe_collect_submodules(package_name):
-    try:
-        return collect_submodules(package_name)
-    except Exception:
-        return []
 
 
 def safe_collect_data_files(package_name):
@@ -26,9 +18,9 @@ def safe_collect_data_files(package_name):
         return []
 
 
-def safe_collect_dynamic_libs(package_name):
+def safe_collect_submodules(package_name):
     try:
-        return collect_dynamic_libs(package_name)
+        return collect_submodules(package_name)
     except Exception:
         return []
 
@@ -38,14 +30,6 @@ def safe_copy_metadata(distribution_name):
         return copy_metadata(distribution_name)
     except Exception:
         return []
-
-
-def collect_python_package(package_name, distribution_name=None, include_dynamic_libs=False, include_submodules=True):
-    collected_datas = safe_collect_data_files(package_name)
-    collected_binaries = safe_collect_dynamic_libs(package_name) if include_dynamic_libs else []
-    collected_hiddenimports = safe_collect_submodules(package_name) if include_submodules else []
-    collected_metadata = safe_copy_metadata(distribution_name or package_name)
-    return collected_datas + collected_metadata, collected_binaries, collected_hiddenimports
 
 
 def collect_tool_binary(name, env_name):
@@ -82,6 +66,7 @@ hiddenimports += [
     "infrastructure.demucs_adapter",
     "infrastructure.downloader_adapter",
     "infrastructure.ffmpeg_adapter",
+    "infrastructure.ai_runtime_manager",
     "domain.entities",
     "domain.interfaces",
     "domain.dependencies",
@@ -107,60 +92,11 @@ for package_name in ["customtkinter", "yt_dlp", "PIL"]:
 for distribution_name in ["customtkinter", "yt-dlp", "pillow"]:
     datas += safe_copy_metadata(distribution_name)
 
-if profile in {"ai", "full"}:
-    ai_packages = [
-        ("dora", "dora-search", False, True),
-        ("julius", "julius", False, True),
-        ("lameenc", "lameenc", True, True),
-        ("openunmix", "openunmix", False, True),
-        ("torch", "torch", True, False),
-        ("torchaudio", "torchaudio", True, False),
-        ("faster_whisper", "faster-whisper", False, True),
-        ("edge_tts", "edge-tts", False, True),
-        ("ctranslate2", "ctranslate2", True, False),
-    ]
-    for package_name, distribution_name, include_dynamic_libs, include_submodules in ai_packages:
-        package_datas, package_binaries, package_hiddenimports = collect_python_package(
-            package_name,
-            distribution_name,
-            include_dynamic_libs=include_dynamic_libs,
-            include_submodules=include_submodules,
-        )
-        datas += package_datas
-        binaries += package_binaries
-        hiddenimports += package_hiddenimports
-    hiddenimports += ["demucs"]
-
-if profile == "full":
-    full_packages = [
-        ("paddleocr", "paddleocr", False, True),
-        ("paddle", "paddlepaddle", True, False),
-    ]
-    for package_name, distribution_name, include_dynamic_libs, include_submodules in full_packages:
-        package_datas, package_binaries, package_hiddenimports = collect_python_package(
-            package_name,
-            distribution_name,
-            include_dynamic_libs=include_dynamic_libs,
-            include_submodules=include_submodules,
-        )
-        datas += package_datas
-        binaries += package_binaries
-        hiddenimports += package_hiddenimports
-
-excludes = ["pytest", "numpy.tests", "PIL.tests"]
-if profile == "base":
-    excludes += ["demucs", "faster_whisper", "edge_tts", "paddle", "paddleocr"]
-if profile == "ai":
-    excludes += ["paddle", "paddleocr"]
-
-
-analysis_paths = [str(src_root)]
-if profile in {"ai", "full"}:
-    analysis_paths.append(str(project_root))
+excludes = ["pytest", "numpy.tests", "PIL.tests", "demucs", "torch", "torchaudio"]
 
 a = Analysis(
     [str(src_root / "presentation" / "main.py")],
-    pathex=analysis_paths,
+    pathex=[str(src_root)],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,

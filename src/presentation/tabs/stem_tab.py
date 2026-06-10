@@ -5,6 +5,13 @@ import customtkinter as ctk
 
 from application.separate_audio_use_case import SeparateAudioUseCase
 from domain.interfaces import StemRequest
+from infrastructure.ai_runtime_manager import (
+    STEM_PACKAGES,
+    AiRuntimeStatus,
+    check_stem_runtime,
+    install_packages,
+)
+from infrastructure.demucs_adapter import DemucsSubprocessAdapter
 from infrastructure.path_config import PathConfig
 from presentation.widgets import LogBox
 
@@ -21,11 +28,12 @@ class StemTab:
         "FLAC (compactado sem perda)": "flac",
     }
 
-    def __init__(self, parent, app, use_case: SeparateAudioUseCase):
+    def __init__(self, parent, app, use_case: SeparateAudioUseCase | None = None):
         self._app = app
         self._use_case = use_case
         self._path_config = PathConfig()
         self._last_output_dir: Path | None = None
+        self._ai_status: AiRuntimeStatus | None = None
 
         self.source_var = ctk.StringVar(value="")
         self.dest_var = ctk.StringVar(value="")
@@ -35,22 +43,125 @@ class StemTab:
 
         self.root = ctk.CTkScrollableFrame(parent, corner_radius=14)
         self.root.pack(fill="both", expand=True, padx=10, pady=10)
-        self._build()
-        self._load_saved_paths()
+        self._stack: list[ctk.CTkFrame] = []
+        self._show_checking()
 
-    def _build(self):
-        ctk.CTkLabel(self.root, text="Separador de Stems", font=ctk.CTkFont(size=24, weight="bold")).pack(
-            anchor="w", padx=14, pady=(12, 4)
-        )
+    def _clear(self):
+        for f in self._stack:
+            f.destroy()
+        self._stack.clear()
+
+    def _push(self, title: str, subtitle: str) -> ctk.CTkFrame:
+        self._clear()
+        header = ctk.CTkFrame(self.root, fg_color="transparent")
+        header.pack(fill="x", padx=14, pady=(12, 0))
+        ctk.CTkLabel(header, text=title, font=ctk.CTkFont(size=24, weight="bold")).pack(anchor="w")
+        ctk.CTkLabel(header, text=subtitle).pack(anchor="w", pady=(2, 12))
+        self._stack.append(header)
+        return header
+
+    def _show_checking(self):
+        frame = self._push("Separador de Stems", "Verificando dependencias...")
+        self._spinner = ctk.CTkProgressBar(frame, mode="indeterminate", width=400)
+        self._spinner.pack(pady=20)
+        self._spinner.start()
+        self._status_msg = ctk.CTkLabel(frame, text="Verificando pacotes de IA...")
+        self._status_msg.pack()
+        self.root.after(50, self._do_check)
+
+    def _do_check(self):
+        self._ai_status = check_stem_runtime()
+        if self._spinner:
+            self._spinner.stop()
+        if self._ai_status.available:
+            self._show_ready()
+        else:
+            self._show_missing()
+
+    def _show_missing(self):
+        frame = self._push("Separador de Stems", "Dependencias de IA necessarias")
+
+        container = ctk.CTkFrame(self.root, corner_radius=16)
+        container.pack(fill="x", padx=14, pady=(0, 20))
+        self._stack.append(container)
+
         ctk.CTkLabel(
-            self.root,
-            text="Separe instrumentos e vocais de arquivos de audio usando IA (Demucs).",
-        ).pack(anchor="w", padx=14, pady=(0, 12))
+            container,
+            text="Pacotes necessarios para separacao de stems:",
+            font=ctk.CTkFont(size=14),
+        ).pack(anchor="w", padx=20, pady=(16, 8))
 
+        pkg_box = ctk.CTkTextbox(container, height=200, width=520)
+        pkg_box.pack(padx=20, pady=(0, 12))
+        lines = []
+        for pkg in STEM_PACKAGES:
+            status = "\u2713" if pkg not in self._ai_status.missing else "\u2717"
+            lines.append(f"  {status} {pkg['import']} ({pkg['pip']})")
+        pkg_box.insert("1.0", "\n".join(lines))
+        pkg_box.configure(state="disabled")
+
+        btn_container = ctk.CTkFrame(container, fg_color="transparent")
+        btn_container.pack(fill="x", padx=20, pady=(0, 16))
+
+        self._install_btn = ctk.CTkButton(
+            btn_container,
+            text="Instalar dependencias",
+            height=40,
+            command=self._start_install,
+        )
+        self._install_btn.pack(side="left")
+
+        self._install_log = LogBox(container, height=120)
+        self._install_progress = ctk.CTkProgressBar(container)
+        self._install_status = ctk.CTkLabel(container, text="", anchor="w")
+
+        self._install_progress.set(0)
+
+    def _start_install(self):
+        self._install_btn.configure(state="disabled", text="Instalando...")
+        self._install_progress.pack(fill="x", padx=20, pady=(0, 8))
+        self._install_status.pack(fill="x", padx=20)
+        self._install_log.pack(fill="x", padx=20, pady=(8, 16))
+
+        import threading
+
+        def task():
+            def progress(value: int | None, message: str):
+                self.root.after(0, lambda: self._update_install_progress(value, message))
+
+            new_status = install_packages(self._ai_status.missing, progress_cb=progress)
+
+            def done():
+                if new_status.available:
+                    self._ai_status = new_status
+                    self._show_ready()
+                else:
+                    self._install_btn.configure(state="normal", text="Tentar novamente")
+                    self._install_status.configure(text="Alguns pacotes nao puderam ser instalados.")
+
+            self.root.after(0, done)
+
+        threading.Thread(target=task, daemon=True).start()
+
+    def _update_install_progress(self, value: int | None, message: str):
+        if value is not None:
+            self._install_progress.set(value / 100.0)
+        if message:
+            self._install_status.configure(text=message)
+            self._install_log.append(message)
+
+    def _show_ready(self):
+        if self._use_case is None:
+            self._use_case = SeparateAudioUseCase(demucs=DemucsSubprocessAdapter())
+
+        self._clear()
+
+        header = self._push("Separador de Stems", "Separe instrumentos e vocais de arquivos de audio usando IA (Demucs).")
         sep_frame = ctk.CTkFrame(self.root, fg_color="transparent")
         sep_frame.pack(fill="x", padx=14, pady=(0, 12))
         for i in range(3):
             sep_frame.grid_columnconfigure(1, weight=1)
+        self._stack.append(sep_frame)
 
         row = 0
         ctk.CTkLabel(sep_frame, text="Arquivo de origem:", width=140).grid(row=row, column=0, sticky="w", pady=4)
@@ -81,6 +192,7 @@ class StemTab:
         options_frame.pack(fill="x", padx=14, pady=(0, 12))
         options_frame.grid_columnconfigure(1, weight=1)
         options_frame.grid_columnconfigure(3, weight=1)
+        self._stack.append(options_frame)
 
         ctk.CTkLabel(options_frame, text="Modo de separacao").grid(row=0, column=0, padx=(12, 8), pady=12, sticky="w")
         self.mode_menu = ctk.CTkOptionMenu(
@@ -102,34 +214,36 @@ class StemTab:
 
         self.start_btn = ctk.CTkButton(self.root, text="Iniciar separacao", height=44, command=self._start_separation)
         self.start_btn.pack(fill="x", padx=14, pady=(0, 12))
+        self._stack.append(self.start_btn)
 
         self.status_label = ctk.CTkLabel(self.root, text="Configure os caminhos e clique em Iniciar.")
         self.status_label.pack(anchor="w", padx=14)
+        self._stack.append(self.status_label)
+
         self.progress = ctk.CTkProgressBar(self.root)
         self.progress.set(0)
         self.progress.pack(fill="x", padx=14, pady=(8, 12))
+        self._stack.append(self.progress)
 
         self.logs = LogBox(self.root, height=220)
         self.logs.pack(fill="x", padx=14, pady=(0, 12))
+        self._stack.append(self.logs)
 
-        self.actions = ctk.CTkFrame(self.root, fg_color="transparent")
-        self.actions.pack(fill="x", padx=14, pady=(0, 14))
-        self.open_dir_btn = ctk.CTkButton(
-            self.actions,
-            text="Abrir pasta de destino",
-            width=180,
-            command=lambda: self._reveal_file(),
-        )
+        actions = ctk.CTkFrame(self.root, fg_color="transparent")
+        actions.pack(fill="x", padx=14, pady=(0, 14))
+        self._stack.append(actions)
+
+        self.open_dir_btn = ctk.CTkButton(actions, text="Abrir pasta de destino", width=180, command=lambda: self._reveal_file())
         self.open_dir_btn.pack(side="left", padx=(0, 8))
         self.open_dir_btn.pack_forget()
-        ctk.CTkButton(self.actions, text="Limpar logs", width=150, command=lambda: self.logs.delete("1.0", "end")).pack(
-            side="left"
-        )
+        ctk.CTkButton(actions, text="Limpar logs", width=150, command=lambda: self.logs.delete("1.0", "end")).pack(side="left")
+
+        if self._path_config.get_dest_dir():
+            self.dest_var.set(self._path_config.get_dest_dir())
 
     def _reveal_file(self):
         import subprocess
         import sys
-
         path = self._last_output_dir
         if not path:
             return
@@ -139,11 +253,6 @@ class StemTab:
             subprocess.Popen(["open", str(path)])
         else:
             subprocess.Popen(["xdg-open", str(path)])
-
-    def _load_saved_paths(self):
-        saved = self._path_config.get_dest_dir()
-        if saved:
-            self.dest_var.set(saved)
 
     def _choose_source(self):
         folder = filedialog.askopenfilename(

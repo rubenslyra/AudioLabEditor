@@ -27,7 +27,7 @@ class DemucsSubprocessAdapter(DemucsPort):
         self._frozen = frozen
 
     def separate(self, request: StemRequest, progress_cb: ProgressCallback = None) -> StemResult:
-        if importlib.util.find_spec("torch") is None:
+        if not self._torch_available():
             raise MissingDependencyError(
                 "PyTorch nao encontrado no ambiente.\n"
                 "Instale as dependencias de IA: pip install 'audiolab-editor[ai]'"
@@ -85,8 +85,26 @@ class DemucsSubprocessAdapter(DemucsPort):
             source_name=request.source_path.stem,
         )
 
+    def _torch_available(self) -> bool:
+        if self._frozen:
+            return False
+        if importlib.util.find_spec("torch") is not None:
+            return True
+        python = self._resolve_python()
+        try:
+            result = subprocess.run([python, "-c", "import torch"], capture_output=True, text=True, timeout=15)
+            return result.returncode == 0
+        except Exception:
+            return False
+
+    def _resolve_python(self) -> str:
+        if getattr(sys, "frozen", False):
+            return "python3"
+        return sys.executable
+
     def _run_subprocess(self, demucs_args: list[str], env: dict[str, str], progress_cb: ProgressCallback):
-        command = [sys.executable, "-m", "demucs"] + demucs_args
+        python = self._resolve_python()
+        command = [python, "-m", "demucs"] + demucs_args
         process = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,

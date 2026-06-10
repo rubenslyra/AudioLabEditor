@@ -1,20 +1,12 @@
-import importlib.util
 from pathlib import Path
 
 from domain.dependencies import DependencyStatus
 from infrastructure.runtime_paths import IS_FROZEN, app_data_dir, find_executable
 
 BASE_TOOLS = ("ffmpeg", "ffprobe")
-OPTIONAL_MODULES = ("torch",)
-FULL_MODULES = ("faster_whisper", "paddleocr")
 
 
-def module_available(module_name: str) -> bool:
-    return importlib.util.find_spec(module_name) is not None
-
-
-def check_startup_dependencies(profile: str = "ai") -> list[DependencyStatus]:
-    profile = (profile or "ai").lower()
+def check_startup_dependencies() -> list[DependencyStatus]:
     statuses: list[DependencyStatus] = []
 
     for tool in BASE_TOOLS:
@@ -26,20 +18,6 @@ def check_startup_dependencies(profile: str = "ai") -> list[DependencyStatus]:
                 path=path,
                 message="" if path else "Binario nao encontrado ao lado do executavel.",
                 required=True,
-            )
-        )
-
-    optional_modules = list(OPTIONAL_MODULES)
-    if profile == "full":
-        optional_modules.extend(FULL_MODULES)
-    for module_name in optional_modules:
-        available = module_available(module_name)
-        statuses.append(
-            DependencyStatus(
-                name=module_name.replace("_", "-"),
-                available=available,
-                message="" if available else f"Pacote opcional {module_name} nao foi embarcado.",
-                required=False,
             )
         )
 
@@ -56,8 +34,8 @@ def check_startup_dependencies(profile: str = "ai") -> list[DependencyStatus]:
     return statuses
 
 
-def startup_error_message(profile: str = "ai") -> str:
-    missing = [item for item in check_startup_dependencies(profile) if item.required and not item.available]
+def startup_error_message() -> str:
+    missing = [item for item in check_startup_dependencies() if item.required and not item.available]
     if not missing:
         return ""
     lines = [
@@ -76,24 +54,6 @@ def startup_error_message(profile: str = "ai") -> str:
             "Instale as dependencias faltantes ou baixe a versao completa da aplicacao.",
         ]
     )
-    return "\n".join(lines)
-
-
-def startup_warning_message(profile: str = "ai") -> str:
-    missing = [item for item in check_startup_dependencies(profile) if not item.required and not item.available]
-    if not missing:
-        return ""
-    lines = [
-        "Algumas dependencias opcionais nao estao instaladas.",
-        "",
-        "Itens opcionais ausentes:",
-    ]
-    for item in missing:
-        detail = f" - {item.name}"
-        if item.message:
-            detail += f": {item.message}"
-        lines.append(detail)
-    lines.extend(["", "A aplicacao continua funcionando com o conjunto base."])
     return "\n".join(lines)
 
 
