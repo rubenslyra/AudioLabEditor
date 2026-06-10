@@ -15,5 +15,5 @@ if exist "%APP_ROOT%\AudioLabEditor.exe" (
 )
 
 set "PYTHONPATH=%APP_ROOT%\src;%PYTHONPATH%"
-python -m presentation.main %*
+cd /d "%APP_ROOT%" && python -m presentation.main %*
 endlocal

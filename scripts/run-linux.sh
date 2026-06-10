@@ -13,4 +13,4 @@ if [ -x "${APP_ROOT}/AudioLabEditor" ]; then
 fi
 
 export PYTHONPATH="${APP_ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}"
-exec python3 -m presentation.main "$@"
+cd "${APP_ROOT}" && exec python3 -m presentation.main "$@"

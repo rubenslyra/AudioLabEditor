@@ -7,7 +7,7 @@ from pathlib import Path
 from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs, collect_submodules, copy_metadata
 
 
-project_root = Path(SPECPATH).parent
+project_root = Path(SPECPATH).resolve().parent
 src_root = project_root / "src"
 profile = os.environ.get("AUDIO_LAB_EDITOR_PROFILE", "ai").lower()
 
@@ -55,14 +55,48 @@ datas = []
 binaries = []
 hiddenimports = []
 
+hiddenimports += [
+    "presentation.main",
+    "presentation.splash",
+    "presentation.widgets",
+    "presentation.tabs.capture_tab",
+    "presentation.tabs.stem_tab",
+    "presentation.tabs.trim_tab",
+    "presentation.tabs.video_editor_tab",
+    "application.bootstrap",
+    "application.capture_media_use_case",
+    "application.separate_audio_use_case",
+    "application.output_organizer",
+    "infrastructure.path_config",
+    "infrastructure.settings_store",
+    "infrastructure.runtime_paths",
+    "infrastructure.startup_doctor",
+    "infrastructure.demucs_adapter",
+    "infrastructure.downloader_adapter",
+    "infrastructure.ffmpeg_adapter",
+    "domain.entities",
+    "domain.interfaces",
+    "domain.dependencies",
+]
+
+assets_dir = src_root / "presentation" / "assets"
+
+if assets_dir.exists():
+    for asset_file in assets_dir.iterdir():
+        if asset_file.is_file():
+            datas.append((str(asset_file), "presentation/assets"))
+    print(f"[AudioLabEditor.spec] Assets included from {assets_dir}")
+else:
+    print(f"[AudioLabEditor.spec] WARNING: assets dir not found at {assets_dir}")
+
 binaries += collect_tool_binary("ffmpeg", "AUDIO_LAB_EDITOR_FFMPEG")
 binaries += collect_tool_binary("ffprobe", "AUDIO_LAB_EDITOR_FFPROBE")
 
-for package_name in ["customtkinter", "yt_dlp"]:
+for package_name in ["customtkinter", "yt_dlp", "PIL"]:
     datas += safe_collect_data_files(package_name)
     hiddenimports += safe_collect_submodules(package_name)
 
-for distribution_name in ["customtkinter", "yt-dlp"]:
+for distribution_name in ["customtkinter", "yt-dlp", "pillow"]:
     datas += safe_copy_metadata(distribution_name)
 
 if profile in {"ai", "full"}:
