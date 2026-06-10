@@ -101,21 +101,34 @@ jobs:
 
           echo "Creating release for tag: $TAG"
 
-          # Collect all artifact files (recursive, any depth)
-          mapfile -t files < <(find artifacts -type f)
+          # Rename each binary to its asset name (parent directory name)
+          # artifacts/<asset_name>/<binary_file> -> artifacts/<asset_name>
+          release_files=()
+          for dir in artifacts/*/; do
+            asset="$(basename "$dir")"
+            binary=$(find "$dir" -type f | head -1)
+            if [ -z "$binary" ]; then
+              echo "WARNING: No binary found in $dir, skipping"
+              continue
+            fi
+            mv "$binary" "artifacts/$asset"
+            rmdir "$dir" 2>/dev/null || true
+            release_files+=("artifacts/$asset")
+            echo "  Prepared: artifacts/$asset"
+          done
 
-          if [ ${#files[@]} -eq 0 ]; then
+          if [ ${#release_files[@]} -eq 0 ]; then
             echo "ERROR: No artifact files found!"
             exit 1
           fi
 
-          echo "Uploading ${#files[@]} artifact(s):"
-          printf '  %s\n' "${files[@]}"
+          echo "Uploading ${#release_files[@]} artifact(s):"
+          printf '  %s\n' "${release_files[@]}"
 
           gh release create "$TAG" \
             --title "$TAG" \
             --notes-file "$BODY" \
             --generate-notes \
-            "${files[@]}"
+            "${release_files[@]}"
 
           echo "Release created successfully!"
