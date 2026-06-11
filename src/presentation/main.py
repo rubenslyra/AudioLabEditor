@@ -85,8 +85,7 @@ def set_window_icon(app):
         pass
 
 
-_LIGHT_TABS = ["Captura", "Audio"]
-_HEAVY_TABS = ["Stems", "Transcricao", "TTS", "Video"]
+TAB_NAMES = ["Captura", "Audio", "Stems", "Transcricao", "TTS", "Video"]
 
 
 def build_window(app, splash=None):
@@ -99,9 +98,7 @@ def build_window(app, splash=None):
 
     step(0.35, "Montando interface...")
 
-    tab_values = _LIGHT_TABS + _HEAVY_TABS
-
-    tab_switcher = ctk.CTkSegmentedButton(app, values=tab_values)
+    tab_switcher = ctk.CTkSegmentedButton(app, values=TAB_NAMES)
     tab_switcher.pack(fill="x", padx=10, pady=(10, 0))
 
     tab_container = ctk.CTkFrame(app)
@@ -109,80 +106,25 @@ def build_window(app, splash=None):
 
     tab_frames: dict[str, ctk.CTkFrame] = {}
     tab_builders: dict[str, callable] = {}
-    _tab_cache: dict[str, bool] = {}
 
     def show_tab(label):
         for f in tab_frames.values():
             f.pack_forget()
-
-        if label in tab_frames:
-            tab_frames[label].pack(fill="both", expand=True)
-            return
-
-        if label in _tab_cache:
-            actual = ctk.CTkFrame(tab_container)
+        if label not in tab_frames:
+            frame = ctk.CTkFrame(tab_container)
             try:
-                tab_builders[label](actual)
+                tab_builders[label](frame)
             except Exception as exc:
-                actual.destroy()
-                error_frame = ctk.CTkFrame(tab_container)
+                frame.destroy()
+                frame = ctk.CTkFrame(tab_container)
                 ctk.CTkLabel(
-                    error_frame,
+                    frame,
                     text=f"Erro ao carregar {label}: {exc}",
                     font=ctk.CTkFont(size=14),
                     text_color="red",
                 ).pack(expand=True)
-                tab_frames[label] = error_frame
-                error_frame.pack(fill="both", expand=True)
-                return
-            tab_frames[label] = actual
-            actual.pack(fill="both", expand=True)
-            return
-
-        placeholder = ctk.CTkFrame(tab_container)
-        placeholder.pack(fill="both", expand=True)
-        tab_frames[label] = placeholder
-
-        ctk.CTkLabel(
-            placeholder,
-            text="Carregando...",
-            font=ctk.CTkFont(size=18),
-        ).pack(expand=True)
-        spinner = ctk.CTkProgressBar(placeholder, mode="indeterminate", width=200)
-        spinner.pack(pady=10)
-        spinner.start()
-
-        def load():
-            try:
-                actual = ctk.CTkFrame(tab_container)
-                tab_builders[label](actual)
-                tab_frames[label] = actual
-                tab_frames[label + "._spawned"] = placeholder
-                placeholder.after(0, lambda: _swap_placeholder(placeholder, actual))
-            except Exception as exc:
-                placeholder.after(0, lambda e=exc: _show_tab_error(placeholder, label, e))
-
-        def _swap_placeholder(old, new):
-            if old.winfo_exists():
-                old.destroy()
-            new.pack(fill="both", expand=True)
-
-        def _show_tab_error(old, label, exc):
-            if old.winfo_exists():
-                old.destroy()
-            error_frame = ctk.CTkFrame(tab_container)
-            ctk.CTkLabel(
-                error_frame,
-                text=f"Erro ao carregar {label}: {exc}",
-                font=ctk.CTkFont(size=14),
-                text_color="red",
-            ).pack(expand=True)
-            tab_frames[label] = error_frame
-            error_frame.pack(fill="both", expand=True)
-
-        t = threading.Thread(target=load, daemon=True)
-        _background_threads.append(t)
-        t.start()
+            tab_frames[label] = frame
+        tab_frames[label].pack(fill="both", expand=True)
 
     tab_switcher.configure(command=show_tab)
     tab_builders["Captura"] = _make_capture_tab_builder(app)
@@ -194,17 +136,6 @@ def build_window(app, splash=None):
 
     show_tab("Captura")
     step(1.0, "Pronto!")
-
-    def _preload():
-        import time
-        time.sleep(0.5)
-        for label in _HEAVY_TABS:
-            if label not in tab_frames:
-                _tab_cache[label] = True
-
-    t = threading.Thread(target=_preload, daemon=True)
-    _background_threads.append(t)
-    t.start()
 
 
 def _make_capture_tab_builder(app):
@@ -281,7 +212,6 @@ def main() -> int:
         return 2
 
     app = ctk.CTk()
-    app.withdraw()
     app.title("AudioLabEditor")
 
     set_window_icon(app)
@@ -293,12 +223,11 @@ def main() -> int:
 
     splash = SplashScreen(app)
     splash.set_progress(0.15, "Inicializando interface...")
+    app.update()
 
     build_window(app, splash)
 
     splash.close()
-    app.deiconify()
-    app.update()
     app.mainloop()
     return 0
 
