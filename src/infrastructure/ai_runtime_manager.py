@@ -5,8 +5,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
-from infrastructure.runtime_paths import IS_FROZEN
-
 STEM_PACKAGES: list[dict[str, str]] = [
     {"import": "torch", "pip": "torch>=2.0"},
     {"import": "torchaudio", "pip": "torchaudio>=2.0"},
@@ -70,16 +68,7 @@ def _check_bundled_or_system(module: str) -> bool:
         return True
     if _check_via_runtime(module):
         return True
-    if not IS_FROZEN:
-        return False
-    try:
-        result = subprocess.run(
-            [sys.executable, "-c", f"import {module}"],
-            capture_output=True, text=True, timeout=15,
-        )
-        return result.returncode == 0
-    except Exception:
-        return False
+    return False
 
 
 def _check_runtime(packages: list[dict[str, str]]) -> AiRuntimeStatus:
