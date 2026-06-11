@@ -3,7 +3,10 @@ import shutil
 import subprocess
 import sys
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Callable
+
+from infrastructure.runtime_paths import app_data_dir
 
 STEM_PACKAGES: list[dict[str, str]] = [
     {"import": "torch", "pip": "torch>=2.0"},
@@ -38,6 +41,52 @@ class AiRuntimeStatus:
     python_path: str = ""
 
 
+def _venv_dir() -> Path:
+    return app_data_dir() / "runtime" / "venv"
+
+
+def _venv_python() -> Path:
+    if sys.platform.startswith("win"):
+        return _venv_dir() / "Scripts" / "python.exe"
+    return _venv_dir() / "bin" / "python"
+
+
+def _ensure_venv(progress_cb: ProgressSink | None = None) -> str | None:
+    venv_python = _venv_python()
+    if venv_python.exists():
+        return str(venv_python)
+
+    if progress_cb:
+        progress_cb(0, "Preparando ambiente isolado...")
+
+    python = _find_system_python()
+    if not python:
+        if progress_cb:
+            progress_cb(None, "Python nao encontrado no sistema.")
+        return None
+
+    try:
+        _venv_dir().parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            [python, "-m", "venv", str(_venv_dir())],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=True,
+        )
+        if progress_cb:
+            progress_cb(50, "Ambiente isolado criado.")
+        return str(_venv_python())
+    except subprocess.CalledProcessError as exc:
+        if progress_cb:
+            progress_cb(None, f"Falha ao criar ambiente virtual: {exc.stderr}")
+        return None
+    except Exception as exc:
+        if progress_cb:
+            progress_cb(None, f"Erro ao preparar ambiente: {exc}")
+        return None
+
+
 def _check_module(name: str) -> bool:
     return importlib.util.find_spec(name) is not None
 
@@ -53,16 +102,13 @@ def _find_system_python() -> str | None:
     return None
 
 
-def _check_system_python(module: str) -> bool:
-    if getattr(sys, "frozen", False):
-        python = _find_system_python()
-    else:
-        python = sys.executable
-    if not python:
+def _check_venv_python(module: str) -> bool:
+    venv_python = _venv_python()
+    if not venv_python.exists():
         return False
     try:
         result = subprocess.run(
-            [python, "-c", f"import {module}"],
+            [str(venv_python), "-c", f"import {module}"],
             capture_output=True,
             text=True,
             timeout=15,
@@ -75,13 +121,15 @@ def _check_system_python(module: str) -> bool:
 def _check_runtime(packages: list[dict[str, str]]) -> AiRuntimeStatus:
     missing: list[dict[str, str]] = []
     for pkg in packages:
-        if not _check_module(pkg["import"]):
-            if not _check_system_python(pkg["import"]):
-                missing.append(pkg)
+        if _check_module(pkg["import"]):
+            continue
+        if _check_venv_python(pkg["import"]):
+            continue
+        missing.append(pkg)
     return AiRuntimeStatus(
         available=len(missing) == 0,
         missing=missing,
-        python_path=_find_system_python() or "python" if getattr(sys, "frozen", False) else sys.executable,
+        python_path=str(_venv_python()) if _venv_python().exists() else _find_system_python() or "python",
     )
 
 
@@ -97,20 +145,21 @@ def check_tts_runtime() -> AiRuntimeStatus:
     return _check_runtime(TTS_PACKAGES)
 
 
-def _pip_install_command(packages: list[str]) -> list[str]:
-    python = _find_system_python() or sys.executable if getattr(sys, "frozen", False) else sys.executable
-    return [python, "-m", "pip", "install", "--upgrade"] + packages
-
-
 def install_packages(packages: list[dict[str, str]], progress_cb: ProgressSink | None = None) -> AiRuntimeStatus:
     if not packages:
         return AiRuntimeStatus(available=True)
 
+    python = _ensure_venv(progress_cb)
+    if not python:
+        return AiRuntimeStatus(available=False, missing=packages)
+
     pkg_names = [pkg["pip"].split(">=")[0] for pkg in packages]
-    cmd = _pip_install_command(pkg_names)
+    total = len(pkg_names)
 
     if progress_cb:
-        progress_cb(0, f"Instalando {len(packages)} pacotes...")
+        progress_cb(1, f"Instalando {total} pacote(s) no ambiente isolado...")
+
+    cmd = [python, "-m", "pip", "install"] + pkg_names
 
     try:
         process = subprocess.Popen(
@@ -133,17 +182,19 @@ def install_packages(packages: list[dict[str, str]], progress_cb: ProgressSink |
         returncode = process.wait()
         if returncode != 0:
             if progress_cb:
-                progress_cb(None, f"pip falhou com codigo {returncode}")
+                progress_cb(None, f"Falha na instalacao (codigo {returncode}).")
                 for line in lines[-3:]:
                     progress_cb(None, f"  {line.strip()}")
             return AiRuntimeStatus(available=False, missing=packages)
     except FileNotFoundError:
         if progress_cb:
-            progress_cb(None, "python ou pip nao encontrado no PATH do sistema.")
+            progress_cb(None, "Python ou pip nao encontrado no ambiente isolado.")
         return AiRuntimeStatus(available=False, missing=packages)
     except Exception as exc:
         if progress_cb:
             progress_cb(None, f"Erro na instalacao: {exc}")
         return AiRuntimeStatus(available=False, missing=packages)
 
+    if progress_cb:
+        progress_cb(100, "Instalacao concluida com sucesso.")
     return AiRuntimeStatus(available=True)

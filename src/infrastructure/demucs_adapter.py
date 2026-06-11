@@ -99,6 +99,10 @@ class DemucsSubprocessAdapter(DemucsPort):
             return False
 
     def _resolve_python(self) -> str:
+        from infrastructure.ai_runtime_manager import _venv_python
+        venv = _venv_python()
+        if venv.exists():
+            return str(venv)
         if getattr(sys, "frozen", False):
             candidates = ["python3", "python"]
             if sys.platform.startswith("win"):

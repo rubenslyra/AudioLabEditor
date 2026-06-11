@@ -130,6 +130,15 @@ class EdgeTtsSubprocessAdapter(TtsPort):
         self._notify(progress_cb, 100.0, f"Audio TTS gerado: {output_file.name}")
 
     def _resolve_edge_tts(self) -> str:
+        from infrastructure.ai_runtime_manager import _venv_python
+
+        venv_python = _venv_python()
+        if venv_python.exists():
+            venv_bin = venv_python.parent
+            edge_cli = venv_bin / "edge-tts"
+            if edge_cli.exists():
+                return str(edge_cli)
+
         import importlib.util
         import shutil
 
@@ -147,7 +156,7 @@ class EdgeTtsSubprocessAdapter(TtsPort):
 
         raise TtsError(
             "edge-tts nao encontrado no PATH.\n"
-            "Instale com: pip install edge-tts"
+            "Instale as dependencias de TTS pela interface do aplicativo."
         )
 
     @staticmethod

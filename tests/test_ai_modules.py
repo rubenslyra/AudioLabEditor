@@ -172,9 +172,12 @@ class TestTranscribeUseCase:
 
     def test_raises_without_dest_dir(self, tmp_path):
         from application.transcribe_audio_use_case import TranscribeAudioUseCase
+        from infrastructure.path_config import PathConfig
+        from infrastructure.settings_store import SettingsStore
 
         mock_transcriber = MagicMock()
-        use_case = TranscribeAudioUseCase(transcriber=mock_transcriber)
+        empty_cfg = PathConfig(store=SettingsStore(file_path=tmp_path / "empty" / "settings.json"))
+        use_case = TranscribeAudioUseCase(transcriber=mock_transcriber, path_config=empty_cfg)
 
         source = tmp_path / "test.wav"
         source.write_text("dummy")
@@ -220,9 +223,12 @@ class TestTtsUseCase:
 
     def test_raises_without_dest_dir(self, tmp_path):
         from application.generate_tts_use_case import GenerateTtsUseCase
+        from infrastructure.path_config import PathConfig
+        from infrastructure.settings_store import SettingsStore
 
         mock_tts = MagicMock()
-        use_case = GenerateTtsUseCase(tts=mock_tts)
+        empty_cfg = PathConfig(store=SettingsStore(file_path=tmp_path / "empty" / "settings.json"))
+        use_case = GenerateTtsUseCase(tts=mock_tts, path_config=empty_cfg)
 
         request = TtsRequest(text="Hello")
         with pytest.raises(RuntimeError, match="Pasta de destino nao configurada"):
@@ -291,9 +297,12 @@ class TestBatchSeparateUseCase:
 
     def test_raises_without_dest_dir(self, tmp_path):
         from application.batch_separate_audio_use_case import BatchSeparateAudioUseCase
+        from infrastructure.path_config import PathConfig
+        from infrastructure.settings_store import SettingsStore
 
         mock_demucs = MagicMock()
-        use_case = BatchSeparateAudioUseCase(demucs=mock_demucs)
+        empty_cfg = PathConfig(store=SettingsStore(file_path=tmp_path / "empty" / "settings.json"))
+        use_case = BatchSeparateAudioUseCase(demucs=mock_demucs, path_config=empty_cfg)
 
         source = tmp_path / "test.wav"
         source.write_text("dummy")

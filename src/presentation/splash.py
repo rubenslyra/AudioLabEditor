@@ -1,16 +1,20 @@
+import time
 from pathlib import Path
 
 import customtkinter as ctk
 from PIL import Image
 
 LOGO_PATH = Path(__file__).resolve().parent / "assets" / "logo.png"
+SPLASH_TIMEOUT_SECONDS = 30
 
 
 class SplashScreen:
     def __init__(self, master: ctk.CTk):
         self._master = master
         self._closed = False
-        self.frame = ctk.CTkFrame(master, corner_radius=16, width=460, height=300)
+        self._started_at = time.monotonic()
+
+        self.frame = ctk.CTkFrame(master, corner_radius=16, width=460, height=340)
         self.frame.place(relx=0.5, rely=0.5, anchor="center")
 
         logo_frame = ctk.CTkFrame(self.frame, fg_color="transparent", height=100)
@@ -35,18 +39,34 @@ class SplashScreen:
             font=ctk.CTkFont(size=24, weight="bold"),
         ).pack(pady=(4, 0))
 
+        self.spinner_label = ctk.CTkLabel(self.frame, text="", font=ctk.CTkFont(size=16))
+        self.spinner_label.pack(pady=(12, 0))
+
         self.status_label = ctk.CTkLabel(
             self.frame,
             text="Inicializando...",
             font=ctk.CTkFont(size=13),
         )
-        self.status_label.pack(pady=(16, 8))
+        self.status_label.pack(pady=(8, 8))
 
         self.progress_bar = ctk.CTkProgressBar(self.frame, width=360, height=10)
         self.progress_bar.pack()
         self.progress_bar.set(0)
 
         self._master.update()
+
+        self._animate_spinner()
+
+    def _animate_spinner(self):
+        if self._closed:
+            return
+        elapsed = time.monotonic() - self._started_at
+        if elapsed > SPLASH_TIMEOUT_SECONDS:
+            self.status_label.configure(text="Isso esta demorando mais que o esperado...")
+        spinner_frames = ["\u25d0", "\u25d1", "\u25d2", "\u25d3"]
+        idx = int(elapsed * 4) % len(spinner_frames)
+        self.spinner_label.configure(text=spinner_frames[idx])
+        self._master.after(200, self._animate_spinner)
 
     def set_progress(self, value: float, message: str = ""):
         if self._closed or not self._widget_exists():

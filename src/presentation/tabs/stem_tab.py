@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from tkinter import filedialog, messagebox
 
@@ -162,6 +163,7 @@ class StemTab:
             "Separador de Stems",
             "Separe instrumentos e vocais de arquivos de audio usando IA (Demucs). Selecione um ou mais arquivos.",
         )
+        self._validate_environment()
         sep_frame = ctk.CTkFrame(self.root, fg_color="transparent")
         sep_frame.pack(fill="x", padx=14, pady=(0, 12))
         for i in range(3):
@@ -227,6 +229,10 @@ class StemTab:
         self.start_btn.pack(fill="x", padx=14, pady=(0, 12))
         self._stack.append(self.start_btn)
 
+        self._env_status_label = ctk.CTkLabel(self.root, text="", anchor="w")
+        self._env_status_label.pack(anchor="w", padx=14, pady=(0, 4))
+        self._stack.append(self._env_status_label)
+
         self.status_label = ctk.CTkLabel(self.root, text="Configure os caminhos e clique em Iniciar.")
         self.status_label.pack(anchor="w", padx=14)
         self._stack.append(self.status_label)
@@ -255,6 +261,31 @@ class StemTab:
 
         if self._path_config.get_dest_dir():
             self.dest_var.set(self._path_config.get_dest_dir())
+
+    def _validate_environment(self):
+        issues = []
+        if shutil.which("ffmpeg") is None:
+            issues.append("ffmpeg nao encontrado no PATH")
+
+        try:
+            free = shutil.disk_usage("/").free
+            if free < 1_000_000_000:
+                issues.append("espaco em disco insuficiente (min 1GB)")
+        except Exception:
+            pass
+
+        if issues:
+            self._env_status_label.configure(
+                text="Atencao: " + "; ".join(issues),
+                text_color="orange",
+            )
+            self.start_btn.configure(state="disabled")
+        else:
+            self._env_status_label.configure(
+                text="Ambiente OK. Recursos de IA disponiveis.",
+                text_color="green",
+            )
+            self.start_btn.configure(state="normal")
 
     def _update_file_list_display(self):
         count = len(self._source_paths)
