@@ -2,7 +2,6 @@
 
 import os
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
@@ -75,7 +74,6 @@ hiddenimports += [
     "infrastructure.downloader_adapter",
     "infrastructure.ffmpeg_adapter",
     "infrastructure.ai_runtime_manager",
-    "infrastructure.runtime_downloader",
     "infrastructure.whisper_adapter",
     "domain.entities",
     "domain.interfaces",
@@ -95,6 +93,26 @@ else:
 binaries += collect_tool_binary("ffmpeg", "AUDIO_LAB_EDITOR_FFMPEG")
 binaries += collect_tool_binary("ffprobe", "AUDIO_LAB_EDITOR_FFPROBE")
 
+AI_PACKAGES = [
+    ("torch", "torch"),
+    ("torchaudio", "torchaudio"),
+    ("demucs", "demucs"),
+    ("dora", "dora-search"),
+    ("julius", "julius"),
+    ("einops", "einops"),
+    ("omegaconf", "omegaconf"),
+    ("yaml", "PyYAML"),
+    ("numpy", "numpy"),
+    ("tqdm", "tqdm"),
+    ("lameenc", "lameenc"),
+    ("openunmix", "openunmix"),
+]
+
+for package_name, distribution_name in AI_PACKAGES:
+    datas += safe_collect_data_files(package_name)
+    hiddenimports += safe_collect_submodules(package_name)
+    datas += safe_copy_metadata(distribution_name)
+
 for package_name in ["customtkinter", "yt_dlp", "PIL", "faster_whisper", "edge_tts"]:
     datas += safe_collect_data_files(package_name)
     hiddenimports += safe_collect_submodules(package_name)
@@ -102,7 +120,7 @@ for package_name in ["customtkinter", "yt_dlp", "PIL", "faster_whisper", "edge_t
 for distribution_name in ["customtkinter", "yt-dlp", "pillow", "faster-whisper", "edge-tts"]:
     datas += safe_copy_metadata(distribution_name)
 
-excludes = ["pytest", "numpy.tests", "PIL.tests", "torch", "torchaudio", "demucs"]
+excludes = ["pytest", "numpy.tests", "PIL.tests"]
 
 a = Analysis(
     [str(src_root / "presentation" / "main.py")],

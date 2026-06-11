@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "audiolab-editor"
-version = "1.2.0"
+version = "1.2.1"
 description = "AudioLab Editor — Capture, edite e separe áudio e vídeo com IA"
 requires-python = ">=3.11"
 license = { text = "MIT" }

@@ -11,6 +11,7 @@ from infrastructure.ai_runtime_manager import (
     check_transcription_runtime,
 )
 from infrastructure.path_config import PathConfig
+from infrastructure.runtime_paths import IS_FROZEN
 from infrastructure.whisper_adapter import (
     WHISPER_LANGUAGES,
     WHISPER_MODELS,
@@ -98,64 +99,30 @@ class TranscriptionTab:
         pkg_box.insert("1.0", "\n".join(lines))
         pkg_box.configure(state="disabled")
 
-        ctk.CTkLabel(
-            container,
-            text="Recursos de IA nao encontrados. Clique abaixo para baixar e instalar automaticamente.",
-            font=ctk.CTkFont(size=12),
-            justify="left",
-            anchor="w",
-        ).pack(anchor="w", padx=20, pady=(8, 4))
-
-        self._dl_progress = ctk.CTkProgressBar(container)
-        self._dl_status = ctk.CTkLabel(container, text="", anchor="w", font=ctk.CTkFont(size=11))
-
-        self._dl_btn = ctk.CTkButton(
-            container,
-            text="Baixar runtime de IA (~1.5 GB)",
-            height=40,
-            command=self._start_download,
-        )
-        self._dl_btn.pack(padx=20, pady=(4, 16))
-
-    def _start_download(self):
-        self._dl_btn.configure(state="disabled", text="Baixando...")
-        self._dl_progress.pack(fill="x", padx=20, pady=(0, 4))
-        self._dl_status.pack(fill="x", padx=20)
-        self._dl_progress.set(0)
-
-        import threading
-
-        from infrastructure.runtime_downloader import ensure_runtime
-
-        def progress(value, msg):
-            self.root.after(0, lambda: self._update_dl_progress(value, msg))
-
-        def task():
-            ok = ensure_runtime(progress_cb=progress)
-
-            def done():
-                if ok:
-                    self._dl_status.configure(text="Runtime instalado! Verificando...")
-                    self._dl_progress.set(1)
-                    self._ai_status = check_transcription_runtime()
-                    if self._ai_status.available:
-                        self._show_ready()
-                    else:
-                        self._dl_btn.configure(state="normal", text="Tentar novamente")
-                        self._dl_status.configure(text="Alguns componentes nao puderam ser instalados.")
-                else:
-                    self._dl_btn.configure(state="normal", text="Tentar novamente")
-                    self._dl_status.configure(text="Falha no download. Verifique sua conexao.")
-
-            self.root.after(0, done)
-
-        threading.Thread(target=task, daemon=True).start()
-
-    def _update_dl_progress(self, value, msg):
-        if value is not None and isinstance(value, (int, float)):
-            self._dl_progress.set(min(1.0, value / 100.0))
-        if msg:
-            self._dl_status.configure(text=msg)
+        if not IS_FROZEN:
+            ctk.CTkLabel(
+                container,
+                text=(
+                    "Modo desenvolvimento: instale as dependencias manualmente:\n"
+                    "  pip install -e \".[ai]\""
+                ),
+                font=ctk.CTkFont(size=12),
+                justify="left",
+                anchor="w",
+                text_color="orange",
+            ).pack(anchor="w", padx=20, pady=(8, 16))
+        else:
+            ctk.CTkLabel(
+                container,
+                text=(
+                    "Erro interno: dependencias de IA nao encontradas no pacote.\n"
+                    "Reinstale o aplicativo ou reporte o bug."
+                ),
+                font=ctk.CTkFont(size=12),
+                justify="left",
+                anchor="w",
+                text_color="red",
+            ).pack(anchor="w", padx=20, pady=(8, 16))
 
     def _show_ready(self):
         if self._use_case is None:
