@@ -177,7 +177,6 @@ class StemTab:
             "Separador de Stems",
             "Separe instrumentos e vocais de arquivos de audio usando IA (Demucs). Selecione um ou mais arquivos.",
         )
-        self._validate_environment()
         sep_frame = ctk.CTkFrame(self.root, fg_color="transparent")
         sep_frame.pack(fill="x", padx=14, pady=(0, 12))
         for i in range(3):
@@ -247,6 +246,7 @@ class StemTab:
         self._env_status_label.pack(anchor="w", padx=14, pady=(0, 4))
         self._stack.append(self._env_status_label)
 
+        self._validate_environment()
         self.status_label = ctk.CTkLabel(self.root, text="Configure os caminhos e clique em Iniciar.")
         self.status_label.pack(anchor="w", padx=14)
         self._stack.append(self.status_label)
