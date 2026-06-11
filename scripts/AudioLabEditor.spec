@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -74,6 +75,7 @@ hiddenimports += [
     "infrastructure.downloader_adapter",
     "infrastructure.ffmpeg_adapter",
     "infrastructure.ai_runtime_manager",
+    "infrastructure.runtime_downloader",
     "infrastructure.whisper_adapter",
     "domain.entities",
     "domain.interfaces",
@@ -93,14 +95,14 @@ else:
 binaries += collect_tool_binary("ffmpeg", "AUDIO_LAB_EDITOR_FFMPEG")
 binaries += collect_tool_binary("ffprobe", "AUDIO_LAB_EDITOR_FFPROBE")
 
-for package_name in ["customtkinter", "yt_dlp", "PIL"]:
+for package_name in ["customtkinter", "yt_dlp", "PIL", "faster_whisper", "edge_tts"]:
     datas += safe_collect_data_files(package_name)
     hiddenimports += safe_collect_submodules(package_name)
 
-for distribution_name in ["customtkinter", "yt-dlp", "pillow"]:
+for distribution_name in ["customtkinter", "yt-dlp", "pillow", "faster-whisper", "edge-tts"]:
     datas += safe_copy_metadata(distribution_name)
 
-excludes = ["pytest", "numpy.tests", "PIL.tests", "demucs", "torch", "torchaudio"]
+excludes = ["pytest", "numpy.tests", "PIL.tests", "torch", "torchaudio", "demucs"]
 
 a = Analysis(
     [str(src_root / "presentation" / "main.py")],

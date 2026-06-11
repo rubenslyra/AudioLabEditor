@@ -2,6 +2,7 @@ import importlib.util
 import subprocess
 import sys
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Callable
 
 from infrastructure.runtime_paths import IS_FROZEN
@@ -38,21 +39,43 @@ class AiRuntimeStatus:
     missing: list[dict[str, str]] = field(default_factory=list)
 
 
+def _ai_runtime_python() -> Path | None:
+    from infrastructure.runtime_downloader import AI_DIR
+    python = AI_DIR / "bin" / "python3"
+    if sys.platform.startswith("win"):
+        python = AI_DIR / "Scripts" / "python.exe"
+    return python if python.exists() else None
+
+
 def _check_module(name: str) -> bool:
     return importlib.util.find_spec(name) is not None
 
 
+def _check_via_runtime(module: str) -> bool:
+    python = _ai_runtime_python()
+    if not python:
+        return False
+    try:
+        result = subprocess.run(
+            [str(python), "-c", f"import {module}"],
+            capture_output=True, text=True, timeout=15,
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
 def _check_bundled_or_system(module: str) -> bool:
     if _check_module(module):
+        return True
+    if _check_via_runtime(module):
         return True
     if not IS_FROZEN:
         return False
     try:
         result = subprocess.run(
             [sys.executable, "-c", f"import {module}"],
-            capture_output=True,
-            text=True,
-            timeout=15,
+            capture_output=True, text=True, timeout=15,
         )
         return result.returncode == 0
     except Exception:
