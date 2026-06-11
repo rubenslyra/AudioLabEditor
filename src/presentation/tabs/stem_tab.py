@@ -11,7 +11,6 @@ from infrastructure.ai_runtime_manager import (
     STEM_PACKAGES,
     AiRuntimeStatus,
     check_stem_runtime,
-    install_packages,
 )
 from infrastructure.demucs_adapter import DemucsSubprocessAdapter
 from infrastructure.path_config import PathConfig
@@ -103,55 +102,15 @@ class StemTab:
         pkg_box.insert("1.0", "\n".join(lines))
         pkg_box.configure(state="disabled")
 
-        btn_container = ctk.CTkFrame(container, fg_color="transparent")
-        btn_container.pack(fill="x", padx=20, pady=(0, 16))
-
-        self._install_btn = ctk.CTkButton(
-            btn_container,
-            text="Instalar dependencias",
-            height=40,
-            command=self._start_install,
-        )
-        self._install_btn.pack(side="left")
-
-        self._install_log = LogBox(container, height=120)
-        self._install_progress = ctk.CTkProgressBar(container)
-        self._install_status = ctk.CTkLabel(container, text="", anchor="w")
-
-        self._install_progress.set(0)
-
-    def _start_install(self):
-        self._install_btn.configure(state="disabled", text="Instalando...")
-        self._install_progress.pack(fill="x", padx=20, pady=(0, 8))
-        self._install_status.pack(fill="x", padx=20)
-        self._install_log.pack(fill="x", padx=20, pady=(8, 16))
-
-        import threading
-
-        def task():
-            def progress(value: int | None, message: str):
-                self.root.after(0, lambda: self._update_install_progress(value, message))
-
-            new_status = install_packages(self._ai_status.missing, progress_cb=progress)
-
-            def done():
-                if new_status.available:
-                    self._ai_status = new_status
-                    self._show_ready()
-                else:
-                    self._install_btn.configure(state="normal", text="Tentar novamente")
-                    self._install_status.configure(text="Alguns pacotes nao puderam ser instalados.")
-
-            self.root.after(0, done)
-
-        threading.Thread(target=task, daemon=True).start()
-
-    def _update_install_progress(self, value: int | None, message: str):
-        if value is not None:
-            self._install_progress.set(value / 100.0)
-        if message:
-            self._install_status.configure(text=message)
-            self._install_log.append(message)
+        ctk.CTkLabel(
+            container,
+            text="Esses pacotes nao estao disponiveis no momento.\n"
+                  "Para usar a separacao de stems, baixe a versao completa com IA em:\n"
+                  "github.com/anomalyco/AudioLabEditor/releases",
+            font=ctk.CTkFont(size=12),
+            justify="left",
+            anchor="w",
+        ).pack(anchor="w", padx=20, pady=(0, 16))
 
     def _show_ready(self):
         if self._use_case is None:

@@ -44,4 +44,3 @@ def test_check_stem_runtime_returns_status_object():
     status = check_stem_runtime()
     assert hasattr(status, "available")
     assert hasattr(status, "missing")
-    assert hasattr(status, "python_path")

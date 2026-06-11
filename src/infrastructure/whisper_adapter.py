@@ -181,10 +181,6 @@ class WhisperSubprocessAdapter(TranscriptionPort):
             progress_cb(None, line)
 
     def _resolve_python(self) -> str:
-        from infrastructure.ai_runtime_manager import _venv_python
-        venv = _venv_python()
-        if venv.exists():
-            return str(venv)
         import shutil
         if getattr(sys, "frozen", False):
             candidates = ["python3", "python"]
