@@ -125,10 +125,22 @@ jobs:
           echo "Uploading ${#release_files[@]} artifact(s):"
           printf '  %s\n' "${release_files[@]}"
 
+          # Compress files >1.9GB (GitHub limit is 2GB per asset)
+          compressed=()
+          for f in "${release_files[@]}"; do
+            size=$(stat -c%s "$f" 2>/dev/null || stat -f%z "$f" 2>/dev/null)
+            if [ "$size" -gt 1900000000 ] 2>/dev/null; then
+              echo "  Compressing $f (${size} bytes > 1.9GB) with xz ..."
+              xz -9 -T0 "$f" && compressed+=("${f}.xz") || compressed+=("$f")
+            else
+              compressed+=("$f")
+            fi
+          done
+
           gh release create "$TAG" \
             --title "$TAG" \
             --notes-file "$BODY" \
             --generate-notes \
-            "${release_files[@]}"
+            "${compressed[@]}"
 
           echo "Release created successfully!"
