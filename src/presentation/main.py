@@ -115,8 +115,8 @@ def build_window(app, splash=None):
             try:
                 tab_builders[label](frame)
             except Exception as exc:
-                frame.destroy()
-                frame = ctk.CTkFrame(tab_container)
+                for child in list(frame.winfo_children()):
+                    child.destroy()
                 ctk.CTkLabel(
                     frame,
                     text=f"Erro ao carregar {label}: {exc}",
@@ -124,7 +124,10 @@ def build_window(app, splash=None):
                     text_color="red",
                 ).pack(expand=True)
             tab_frames[label] = frame
-        tab_frames[label].pack(fill="both", expand=True)
+        try:
+            tab_frames[label].pack(fill="both", expand=True)
+        except Exception:
+            pass
 
     tab_switcher.configure(command=show_tab)
     tab_builders["Captura"] = _make_capture_tab_builder(app)
@@ -223,11 +226,20 @@ def main() -> int:
 
     splash = SplashScreen(app)
     splash.set_progress(0.15, "Inicializando interface...")
+
+    app.update_idletasks()
     app.update()
+    app.lift()
+    app.focus_force()
 
-    build_window(app, splash)
+    try:
+        build_window(app, splash)
+    except Exception as exc:
+        splash.set_progress(1.0, f"Erro: {exc}")
+        app.update()
+    finally:
+        splash.close()
 
-    splash.close()
     app.mainloop()
     return 0
 

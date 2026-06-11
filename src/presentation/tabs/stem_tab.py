@@ -72,11 +72,17 @@ class StemTab:
         self.root.after(50, self._do_check)
 
     def _do_check(self):
-        self._ai_status = check_stem_runtime()
+        try:
+            self._ai_status = check_stem_runtime()
+        except Exception:
+            self._ai_status = AiRuntimeStatus(available=False, missing=STEM_PACKAGES)
         if self._spinner:
             self._spinner.stop()
-        if self._ai_status.available:
-            self._show_ready()
+        if self._ai_status and self._ai_status.available:
+            try:
+                self._show_ready()
+            except Exception:
+                self._show_missing()
         else:
             self._show_missing()
 
