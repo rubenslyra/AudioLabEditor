@@ -119,6 +119,26 @@ def build_window(app, splash=None):
             tab_frames[label].pack(fill="both", expand=True)
             return
 
+        if label in _tab_cache:
+            actual = ctk.CTkFrame(tab_container)
+            try:
+                tab_builders[label](actual)
+            except Exception as exc:
+                actual.destroy()
+                error_frame = ctk.CTkFrame(tab_container)
+                ctk.CTkLabel(
+                    error_frame,
+                    text=f"Erro ao carregar {label}: {exc}",
+                    font=ctk.CTkFont(size=14),
+                    text_color="red",
+                ).pack(expand=True)
+                tab_frames[label] = error_frame
+                error_frame.pack(fill="both", expand=True)
+                return
+            tab_frames[label] = actual
+            actual.pack(fill="both", expand=True)
+            return
+
         placeholder = ctk.CTkFrame(tab_container)
         placeholder.pack(fill="both", expand=True)
         tab_frames[label] = placeholder
@@ -136,27 +156,33 @@ def build_window(app, splash=None):
             try:
                 actual = ctk.CTkFrame(tab_container)
                 tab_builders[label](actual)
-                placeholder.destroy()
                 tab_frames[label] = actual
-                actual.pack(fill="both", expand=True)
+                tab_frames[label + "._spawned"] = placeholder
+                placeholder.after(0, lambda: _swap_placeholder(placeholder, actual))
             except Exception as exc:
-                placeholder.destroy()
-                error_frame = ctk.CTkFrame(tab_container)
-                ctk.CTkLabel(
-                    error_frame,
-                    text=f"Erro ao carregar {label}: {exc}",
-                    font=ctk.CTkFont(size=14),
-                    text_color="red",
-                ).pack(expand=True)
-                tab_frames[label] = error_frame
-                error_frame.pack(fill="both", expand=True)
+                placeholder.after(0, lambda e=exc: _show_tab_error(placeholder, label, e))
 
-        if label in _tab_cache:
-            load()
-        else:
-            t = threading.Thread(target=load, daemon=True)
-            _background_threads.append(t)
-            t.start()
+        def _swap_placeholder(old, new):
+            if old.winfo_exists():
+                old.destroy()
+            new.pack(fill="both", expand=True)
+
+        def _show_tab_error(old, label, exc):
+            if old.winfo_exists():
+                old.destroy()
+            error_frame = ctk.CTkFrame(tab_container)
+            ctk.CTkLabel(
+                error_frame,
+                text=f"Erro ao carregar {label}: {exc}",
+                font=ctk.CTkFont(size=14),
+                text_color="red",
+            ).pack(expand=True)
+            tab_frames[label] = error_frame
+            error_frame.pack(fill="both", expand=True)
+
+        t = threading.Thread(target=load, daemon=True)
+        _background_threads.append(t)
+        t.start()
 
     tab_switcher.configure(command=show_tab)
     tab_builders["Captura"] = _make_capture_tab_builder(app)
@@ -169,20 +195,14 @@ def build_window(app, splash=None):
     show_tab("Captura")
     step(1.0, "Pronto!")
 
-    def _preload_heavy():
+    def _preload():
         import time
         time.sleep(0.5)
         for label in _HEAVY_TABS:
             if label not in tab_frames:
-                try:
-                    frame = ctk.CTkFrame(tab_container)
-                    tab_builders[label](frame)
-                    tab_frames[label] = frame
-                    _tab_cache[label] = True
-                except Exception:
-                    pass
+                _tab_cache[label] = True
 
-    t = threading.Thread(target=_preload_heavy, daemon=True)
+    t = threading.Thread(target=_preload, daemon=True)
     _background_threads.append(t)
     t.start()
 
