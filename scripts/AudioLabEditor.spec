@@ -124,7 +124,7 @@ excludes = ["pytest", "numpy.tests", "PIL.tests"]
 
 a = Analysis(
     [str(src_root / "presentation" / "main.py")],
-    pathex=[str(src_root)],
+    pathex=[str(src_root), str(project_root)],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
