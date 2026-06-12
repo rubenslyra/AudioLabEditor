@@ -76,7 +76,7 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
@@ -132,13 +132,27 @@ jobs:
           echo "Uploading ${#release_files[@]} artifact(s):"
           printf '  %s\n' "${release_files[@]}"
 
-          # Compress files >1.9GB (GitHub limit is 2GB per asset)
+          # Compress/split files >1.9GB (GitHub limit is 2GB per asset)
           compressed=()
           for f in "${release_files[@]}"; do
             size=$(stat -c%s "$f" 2>/dev/null || stat -f%z "$f" 2>/dev/null)
             if [ "$size" -gt 1900000000 ] 2>/dev/null; then
               echo "  Compressing $f (${size} bytes > 1.9GB) with xz ..."
-              xz -9 -T0 "$f" && compressed+=("${f}.xz") || compressed+=("$f")
+              # try extreme first, fallback to normal
+              xz -9 -e -T0 "$f" 2>/dev/null || xz -9 -T0 "$f"
+              xz_size=$(stat -c%s "${f}.xz" 2>/dev/null || stat -f%z "${f}.xz" 2>/dev/null)
+              if [ "$xz_size" -gt 2147483648 ] 2>/dev/null; then
+                echo "  xz file still >2GB (${xz_size} bytes), splitting into parts..."
+                rm -f "${f}.xz"
+                split -b 1900M "$f" "${f}.part."
+                for part in "${f}.part."*; do
+                  [ -f "$part" ] || continue
+                  echo "    Compressing part $(basename "$part")..."
+                  xz -9 -T0 "$part" && compressed+=("${part}.xz")
+                done
+              else
+                compressed+=("${f}.xz")
+              fi
             else
               compressed+=("$f")
             fi
