@@ -101,6 +101,13 @@ jobs:
 
           echo "Creating release for tag: $TAG"
 
+          NOTES_ARGS=()
+          if [ -f "$BODY" ]; then
+            NOTES_ARGS=(--notes-file "$BODY")
+          else
+            echo "WARNING: $BODY not found, using --generate-notes only"
+          fi
+
           # Flatten artifacts: copy each binary to a flat dir with its asset name
           # artifacts/<asset_name>/<binary_file> -> artifacts-out/<asset_name>
           mkdir -p artifacts-out
@@ -139,7 +146,7 @@ jobs:
 
           gh release create "$TAG" \
             --title "$TAG" \
-            --notes-file "$BODY" \
+            "${NOTES_ARGS[@]}" \
             --generate-notes \
             "${compressed[@]}"
 
