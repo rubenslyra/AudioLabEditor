@@ -257,6 +257,42 @@ O binário inclui apenas funcionalidades core (~132 MB). IA é instalada sob dem
 
 ---
 
+## Tratamento de Erros
+
+Cada biblioteca/componente do sistema tem cenários de erro mapeados com causas e soluções:
+
+| Componente | Erro | Causa | Tratamento |
+|---|---|---|---|
+| **yt-dlp** | `DownloadError` | URL inválida ou vídeo removido | try/except com messagebox |
+| | `GeoRestrictedError` | Bloqueio regional | Sugerir VPN ao usuário |
+| | `NetworkError` | Sem conexão | Aumentar retries (10) e socket_timeout (30) |
+| **ffmpeg** | returncode != 0 | Parâmetros inválidos ou codec ausente | Capturar stderr e exibir mensagem clara |
+| | `FileNotFoundError` | ffmpeg ausente do PATH | Verificar com `shutil.which()` antes de usar |
+| | `TimeoutExpired` | Arquivo muito longo | Usar timeout configurável; permitir cancelamento |
+| **PyTorch** | `ImportError` | torch não instalado | Instalar via pip; usar `importlib.find_spec` para detectar |
+| | `cuda.OutOfMemoryError` | GPU sem memória | Cair para `device="cpu"` automaticamente |
+| | `TorchCodec required` | torchcodec ausente | `pip install torchcodec` |
+| **Demucs** | `MissingDependencyError` | torch/demucs ausente | Verificar dependências antes de executar |
+| | `EOFError` / truncated data | Checkpoint corrompido | Remover `~/.cache/torch/hub/` e re-baixar |
+| | Decompression return code -1 | Binário PyInstaller >2GB | Usar Python diretamente em vez do binário congelado |
+| **librosa** | `ImportError` | librosa não instalado | `pip install librosa soundfile` |
+| | `soundfile.LibsndfileError` | WAV inválido | Fallback para `audioread` |
+| | `ParameterError` | fmin >= fmax em pyin | Validar parâmetros; usar defaults seguros |
+| **faster-whisper** | `ImportError` | faster-whisper ausente | `pip install faster-whisper` |
+| | Model too large | large-v3 sem RAM suficiente | Cair para modelo menor (base) |
+| | sndfile library not found | libsndfile ausente no SO | `sudo apt install libsndfile1` |
+| **edge-tts** | `ConnectionError` | Sem internet | Verificar conectividade; informar usuário |
+| | returncode 1 | Servidor Microsoft indisponível | Tentar novamente com backoff |
+| | `ImportError` | edge-tts ausente | `pip install edge-tts` |
+| **customtkinter** | `TclError: invalid command name` | Widget destruído antes de callback | Usar `root.after()`; verificar `winfo_exists()` |
+| | `can not find display` | Sem servidor X (Linux headless) | Fallback para modo CLI |
+| **NumPy** | `ValueError: broadcasting` | Shapes incompatíveis | Verificar dimensões antes de operações |
+| | `ZeroDivisionError` | Divisão por zero em normalização | Usar `max(denominador, 1e-10)` |
+
+> **Documento completo** com exemplos CLI, GUI tkinter e tratamento detalhado de cada biblioteca está em [`AudioLabEditor_Manual_de_Componentes.docx`](./AudioLabEditor_Manual_de_Componentes.docx) e no [wiki do projeto](https://github.com/rubenslyra/AudioLabEditor/wiki/CLI-Stem-Extraction).
+
+---
+
 ## Testes
 
 ```bash
