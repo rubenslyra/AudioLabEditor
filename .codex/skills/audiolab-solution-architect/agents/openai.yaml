@@ -1,0 +1,4 @@
+interface:
+  display_name: "AudioLab Solution Architect"
+  short_description: "Arquitetura e decisões técnicas do produto"
+  default_prompt: "Use $audiolab-solution-architect para avaliar a arquitetura de uma solução no AudioLab Editor."

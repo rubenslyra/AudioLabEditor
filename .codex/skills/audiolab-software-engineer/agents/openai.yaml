@@ -1,0 +1,4 @@
+interface:
+  display_name: "AudioLab Software Engineer"
+  short_description: "Implementação Python com qualidade e testes"
+  default_prompt: "Use $audiolab-software-engineer para implementar uma mudança segura no AudioLab Editor."

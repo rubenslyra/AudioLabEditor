@@ -1,0 +1,4 @@
+interface:
+  display_name: "AudioLab Business Specialist"
+  short_description: "Regras, mercado e viabilidade do produto"
+  default_prompt: "Use $audiolab-business-specialist para analisar uma decisão de negócio do AudioLab Editor."

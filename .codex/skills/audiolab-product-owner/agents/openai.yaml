@@ -1,0 +1,4 @@
+interface:
+  display_name: "AudioLab Product Owner"
+  short_description: "Valor, backlog e critérios de aceitação"
+  default_prompt: "Use $audiolab-product-owner para priorizar uma iniciativa do AudioLab Editor."

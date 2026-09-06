@@ -1,0 +1,4 @@
+interface:
+  display_name: "AudioLab Database Specialist"
+  short_description: "Dados, persistência, migrações e privacidade"
+  default_prompt: "Use $audiolab-database-specialist para projetar a persistência de dados do AudioLab Editor."

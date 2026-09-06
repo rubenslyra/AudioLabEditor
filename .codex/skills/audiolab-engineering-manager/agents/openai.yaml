@@ -1,0 +1,4 @@
+interface:
+  display_name: "AudioLab Engineering Manager"
+  short_description: "Execução, riscos e governança técnica"
+  default_prompt: "Use $audiolab-engineering-manager para organizar a execução de uma entrega do AudioLab Editor."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "AudioLab Infrastructure Architect"
+  short_description: "Build, CI/CD e operação multiplataforma"
+  default_prompt: "Use $audiolab-infrastructure-architect para planejar infraestrutura ou entrega do AudioLab Editor."
